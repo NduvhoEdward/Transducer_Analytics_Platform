@@ -9,8 +9,8 @@
 #define START_PUMP_BUTTON GPIO_NUM_35
 #define ONBOARD_LED_PIN GPIO_NUM_2
 
-#define PUMP_ON_LIGHT_PIN GPIO_NUM_12 
-#define PUMP_OFF_LIGHT_PIN GPIO_NUM_13 
+#define PUMP_ON_LIGHT_PIN GPIO_NUM_12
+#define PUMP_OFF_LIGHT_PIN GPIO_NUM_13
 
 #define PCNT_UPPER_LIM INT16_MAX
 
@@ -203,12 +203,15 @@ void IRAM_ATTR start_pumping() {
 }
 
 void pump() {
-    Serial.println("Valve open..... (Pumping)"); 
+    Serial.println("\\n\nValve open..... (Pumping)\n\n");
     digitalWrite(VALVE_CONTROL_PIN, HIGH);
     digitalWrite(PUMP_OFF_LIGHT_PIN, LOW);
     digitalWrite(PUMP_ON_LIGHT_PIN, HIGH);
 
-    while (current_height < 0.95 * TANK_MAX_HEIGHT && pumping == true) { 
+    // Print headers
+    Serial.println("ADC Value(dec)\tADC Voltage(V)\tPressure(mBars)\tHeight(m)\tPulse Counter Value\tTotal Volume(gal)");
+
+    while (current_height < 0.95 * TANK_MAX_HEIGHT && pumping == true) {
         p_adc_value = get_p_adc_value();
         p_adc_voltage = p_adc_to_volts();
         pressure_bars = get_p_from_v();
@@ -217,18 +220,21 @@ void pump() {
         totalPulseCounts = getTotalPulses();
         total_volume_gal = getCurrentMass();
 
-        printf("ADC Value(dec): %d\n", p_adc_value);
-        printf("ADC Voltage(V): %f\n", p_adc_voltage);
-        printf("Pressure(mBars): %f\n", pressure_bars * 1000);
-        printf("Height(m): %f\n\n", current_height);
-
-        printf("Pulse Counter Value: %d\n", static_cast<int>(totalPulseCounts));
-        printf("Total Volume(gal): %f\n", total_volume_gal);
-        printf("__________________________________________________________________________________ \n");
+        // Data
+        Serial.print(p_adc_value);
+        Serial.print("\t\t");
+        Serial.print(p_adc_voltage);
+        Serial.print("\t\t");
+        Serial.print(pressure_bars * 1000);
+        Serial.print("\t\t");
+        Serial.print(current_height);
+        Serial.print("\t\t");
+        Serial.print(static_cast<int>(totalPulseCounts));
+        Serial.print("\t\t");
+        Serial.println(total_volume_gal);
 
         delay(1000);  // Can be lowered to get more readings / data points
         // current_height += 10;
     }
     pumping = false;
 }
-
