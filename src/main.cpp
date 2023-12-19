@@ -1,6 +1,11 @@
 #include <Arduino.h>
+#include <Arduino_JSON.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+#include <WiFi.h>
 #include <driver/pcnt.h>
 
+#include "SPIFFS.h"
 #include "driver/adc.h"
 
 #define PRESSURE_TRANSMITTER_PIN GPIO_NUM_34
@@ -21,7 +26,7 @@
 #define P_MAX 1.0
 
 #define F_SENSOR_K_FACTOR_PPG 197.77
-#define TANK_MAX_HEIGHT 5
+#define TANK_MAX_HEIGHT 10
 #define DENSITY 1000
 
 uint16_t p_adc_value = 0;
@@ -43,7 +48,7 @@ const int p_adc_max = 4095;  // 0xFFF;  // In adc 12bit mode
 float pressure_bars = 0.0;
 
 const float p_shunt_resistor = P_SHUNT_RESISTOR_OHMS;
-const float transmitter_min_cur = PT_MIN_CUR_IN_mA / 1000;
+const float transmitter_min_cur = PT_MIN_CUR_IN_mA / 1000; 
 const float transmitter_max_cur = PT_MAX_CUR_IN_mA / 1000;
 const float p_at_min_cur = P_MIN;
 const float p_at_max_cur = P_MAX;
@@ -58,6 +63,18 @@ const float yIntercept = p_at_min_cur - vp_slope * v_at_min_cur;
 unsigned long lastDebounceTime = 0;  // Last time the button state changed
 unsigned long debounceDelay = 1000;  // Debounce time in milliseconds
 
+// WebSocket vars
+const char *ssid = "IMINING HO";
+const char *password = "1Min!Ng010";
+AsyncWebServer server(80);  // Create AsyncWebServer object on port 80
+
+AsyncWebSocket ws("/ws");  // Create a WebSocket object
+
+JSONVar readings;  // Json Variable to Hold Sensor Readings
+
+unsigned long lastTime = 0;  // Timer variables
+unsigned long timerDelay = 3000;
+
 // Volume reading vars
 const float k_factor = F_SENSOR_K_FACTOR_PPG;
 float total_volume_gal = 0.0;
@@ -65,7 +82,7 @@ float total_volume_gal = 0.0;
 // function declarations:
 void configureGPIOs();
 void pulseCounterInit();
-static void IRAM_ATTR pulseCounterISR(void* arg);
+static void IRAM_ATTR pulseCounterISR(void *arg);
 uint32_t getTotalPulses();
 void adcInit();
 uint16_t get_p_adc_value();
@@ -76,7 +93,16 @@ float get_p_from_v();
 void IRAM_ATTR start_pumping();
 void pump();
 
+String getSensorReadings();
+void initSPIFFS();
+void initWiFi();
+void notifyClients(String sensorReadings);
+void handleWebSocketMessage(void *arg, uint8_t *data, size_t len);
+void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
+void initWebSocket();
+
 void setup() {
+    Serial.begin(115200);
     configureGPIOs();
     adcInit();
     calib_adc_and_v();
@@ -84,7 +110,16 @@ void setup() {
 
     attachInterrupt(START_PUMP_BUTTON, start_pumping, HIGH);
 
-    Serial.begin(115200);
+    initWiFi();
+    initSPIFFS();
+    initWebSocket();
+    // Web Server Root URL
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(SPIFFS, "/index.html", "text/html");
+    });
+
+    server.serveStatic("/", SPIFFS, "/");
+    server.begin();  // Start server
 }
 
 void loop() {
@@ -96,6 +131,7 @@ void loop() {
     while (!pumping) {
         NOP();
     }
+    pcnt_counter_clear(PCNT_UNIT_0);
     pump();
 }
 
@@ -173,7 +209,7 @@ void pulseCounterInit() {
     pcnt_counter_resume(PCNT_UNIT_0);
 }
 
-static void IRAM_ATTR pulseCounterISR(void* arg) {
+static void IRAM_ATTR pulseCounterISR(void *arg) {
     maxCountsCycle++;
 }
 
@@ -233,8 +269,79 @@ void pump() {
         Serial.print("\t\t");
         Serial.println(total_volume_gal);
 
-        delay(1000);  // Can be lowered to get more readings / data points
-        // current_height += 10;
+        String sensorReadings = getSensorReadings();
+        notifyClients(sensorReadings);
+
+        delay(500);  // Can be lowered to get more readings / data points
     }
     pumping = false;
+}
+
+// Get Sensor Readings and return JSON object
+String getSensorReadings() {
+    readings["pressure"] = String(pressure_bars * 1000);
+    readings["height"] = String(current_height);
+    readings["volume"] = String(total_volume_gal);
+    String jsonString = JSON.stringify(readings);
+    return jsonString;
+}
+
+// Initialize SPIFFS
+void initSPIFFS() {
+    if (!SPIFFS.begin(true)) {
+        Serial.println("An error has occurred while mounting SPIFFS");
+    }
+    Serial.println("SPIFFS mounted successfully");
+}
+
+// Initialize WiFi
+void initWiFi() {
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, password);
+    Serial.print("Connecting to WiFi ..");
+    while (WiFi.status() != WL_CONNECTED) {
+        Serial.print('.');
+        delay(1000);
+    }
+    Serial.println(WiFi.localIP());
+}
+
+void notifyClients(String sensorReadings) {
+    ws.textAll(sensorReadings);
+}
+
+void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
+    AwsFrameInfo *info = (AwsFrameInfo *)arg;
+    if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
+        // data[len] = 0;
+        // String message = (char*)data;
+        //  Check if the message is "getReadings"
+        // if (strcmp((char*)data, "getReadings") == 0) {
+        // if it is, send current sensor readings
+        String sensorReadings = getSensorReadings();
+        notifyClients(sensorReadings);
+        //}
+    }
+}
+
+void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+    switch (type) {
+        case WS_EVT_CONNECT:
+            Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+            break;
+        case WS_EVT_DISCONNECT:
+            Serial.printf("WebSocket client #%u disconnected\n", client->id());
+            break;
+        case WS_EVT_DATA:
+            handleWebSocketMessage(arg, data, len);
+            break;
+        case WS_EVT_PONG:
+        case WS_EVT_ERROR:
+            break;
+    }
+}
+
+void initWebSocket() {
+    ws.onEvent(onEvent);
+    server.addHandler(&ws);
 }
