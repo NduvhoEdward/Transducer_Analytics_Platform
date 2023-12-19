@@ -3,30 +3,35 @@
 
 #include "driver/adc.h"
 
+#define PRESSURE_TRANSMITTER_PIN GPIO_NUM_34
 #define PULSE_COUNTER_PIN GPIO_NUM_36
+#define VALVE_CONTROL_PIN GPIO_NUM_32
+#define START_PUMP_BUTTON GPIO_NUM_35
 #define ONBOARD_LED_PIN GPIO_NUM_2
-#define VALVE_RELAY_PIN GPIO_NUM_32
-#define PUMP_ON_LIGHT_PIN GPIO_NUM_12   // x -> to be set in gpio_config too
-#define PUMP_OFF_LIGHT_PIN GPIO_NUM_13  // y
+
+#define PUMP_ON_LIGHT_PIN GPIO_NUM_12 
+#define PUMP_OFF_LIGHT_PIN GPIO_NUM_13 
+
 #define PCNT_UPPER_LIM INT16_MAX
 
 #define P_SHUNT_RESISTOR_OHMS 100.0
 #define PT_MIN_CUR_IN_mA 4.0
 #define PT_MAX_CUR_IN_mA 20.0
 #define P_MIN 0.0
-#define P_MAX 25.0
+#define P_MAX 1.0
 
 #define F_SENSOR_K_FACTOR_PPG 197.77
-#define TANK_MAX_HEIGHT 3
+#define TANK_MAX_HEIGHT 5
 #define DENSITY 1000
 
 uint16_t p_adc_value = 0;
 uint32_t totalPulseCounts = 0;
 int16_t pulseCount = 0;
 volatile int maxCountsCycle = 0;
+volatile bool pumping = false;
 
 // Pressure reading vars
-const float p_adc_vref = 3.3;  // Only use before calib, to the adc_v values to create a v eq...
+const float p_adc_vref = 3.3;  // Only used before calib, to get the adc_v values to create a v-adc eq...
 float p_adc_voltage = 0;
 float adc_v_slope = 0;
 float adc_volts_yIntercept = 0;
@@ -49,11 +54,15 @@ const float v_at_max_cur = transmitter_max_cur * p_shunt_resistor;
 const float vp_slope = (p_at_max_cur - p_at_min_cur) / (v_at_max_cur - v_at_min_cur);
 const float yIntercept = p_at_min_cur - vp_slope * v_at_min_cur;
 
+// Button debounce vars
+unsigned long lastDebounceTime = 0;  // Last time the button state changed
+unsigned long debounceDelay = 1000;  // Debounce time in milliseconds
+
 // Volume reading vars
 const float k_factor = F_SENSOR_K_FACTOR_PPG;
 float total_volume_gal = 0.0;
 
-// put function declarations here:
+// function declarations:
 void configureGPIOs();
 void pulseCounterInit();
 static void IRAM_ATTR pulseCounterISR(void* arg);
@@ -64,12 +73,8 @@ float getCurrentMass();
 float p_adc_to_volts();
 void calib_adc_and_v();
 float get_p_from_v();
-void check_attendance();
-void shutdown_sequence();
-
-int adc_sum = 0;
-float v_sum = 0;
-int counter = 0;
+void IRAM_ATTR start_pumping();
+void pump();
 
 void setup() {
     configureGPIOs();
@@ -77,56 +82,33 @@ void setup() {
     calib_adc_and_v();
     pulseCounterInit();
 
+    attachInterrupt(START_PUMP_BUTTON, start_pumping, HIGH);
+
     Serial.begin(115200);
 }
 
 void loop() {
-    p_adc_value = get_p_adc_value();
-    p_adc_voltage = p_adc_to_volts();
-    pressure_bars = get_p_from_v();
-    current_height = (pressure_bars * bars_to_pa_multiplier) / (DENSITY * grav_acc);
+    digitalWrite(PUMP_OFF_LIGHT_PIN, HIGH);
+    digitalWrite(PUMP_ON_LIGHT_PIN, LOW);
+    digitalWrite(VALVE_CONTROL_PIN, LOW);
 
-    adc_sum += p_adc_value;
-    v_sum += p_adc_voltage;
-    counter++;
-
-    if (counter == 100) {
-        printf("ADC Valuesssss: %d\n", adc_sum / counter);
-        printf("ADC Voltagessss: %f\n", v_sum / counter);
-        esp_deep_sleep_start();
+    Serial.println("\n\nValve closed..... (Not pumping) \n\n");
+    while (!pumping) {
+        NOP();
     }
-
-    totalPulseCounts = getTotalPulses();
-    total_volume_gal = getCurrentMass();
-
-    printf("ADC Value(dec): %d\n", p_adc_value);
-    printf("ADC Voltage(V): %f\n", p_adc_voltage);
-    printf("Pressure(Bars): %f\n\n", pressure_bars);
-
-    printf("Pulse Counter Value: %d\n", static_cast<int>(totalPulseCounts));
-    printf("Total Volume(gal): %f\n", total_volume_gal);
-    printf("__________________________________________________________________________________ \n");
-
-    // if (current_height >= 0.95 * TANK_MAX_HEIGHT) {
-    //     shutdown_sequence();
-    //     esp_deep_sleep_start();
-    // }
-
-    if (digitalRead(ONBOARD_LED_PIN) == HIGH) {
-        digitalWrite(ONBOARD_LED_PIN, LOW);
-    } else {
-        digitalWrite(ONBOARD_LED_PIN, HIGH);
-    }
-
-    delay(10);  // Can be lowered to get more readings
+    pump();
 }
 
 // function definitions:
 void configureGPIOs() {
-    pinMode(GPIO_NUM_34, INPUT);
-    pinMode(GPIO_NUM_36, INPUT);
-    pinMode(GPIO_NUM_2, OUTPUT);
-    pinMode(GPIO_NUM_32, OUTPUT);
+    pinMode(PRESSURE_TRANSMITTER_PIN, INPUT);
+    pinMode(PULSE_COUNTER_PIN, INPUT_PULLDOWN);
+    pinMode(START_PUMP_BUTTON, INPUT_PULLDOWN);
+    pinMode(VALVE_CONTROL_PIN, OUTPUT);
+
+    pinMode(PUMP_ON_LIGHT_PIN, OUTPUT);
+    pinMode(PUMP_OFF_LIGHT_PIN, OUTPUT);
+    pinMode(ONBOARD_LED_PIN, OUTPUT);
 }
 
 void adcInit() {
@@ -205,8 +187,48 @@ float getCurrentMass() {
     return totalPulseCounts / k_factor;
 }
 
-void shutdown_sequence() {
-    while (true) {
-        NOP();
+void IRAM_ATTR start_pumping() {
+    unsigned long currentMillis = millis();
+
+    // Check if enough time has passed since the last interrupt
+    if (currentMillis - lastDebounceTime >= debounceDelay) {
+        lastDebounceTime = currentMillis;
+
+        if (!pumping) {
+            pumping = true;
+        } else {
+            pumping = false;
+        }
     }
 }
+
+void pump() {
+    Serial.println("Valve open..... (Pumping)"); 
+    digitalWrite(VALVE_CONTROL_PIN, HIGH);
+    digitalWrite(PUMP_OFF_LIGHT_PIN, LOW);
+    digitalWrite(PUMP_ON_LIGHT_PIN, HIGH);
+
+    while (current_height < 0.95 * TANK_MAX_HEIGHT && pumping == true) { 
+        p_adc_value = get_p_adc_value();
+        p_adc_voltage = p_adc_to_volts();
+        pressure_bars = get_p_from_v();
+        current_height = (pressure_bars * bars_to_pa_multiplier) / (DENSITY * grav_acc);
+
+        totalPulseCounts = getTotalPulses();
+        total_volume_gal = getCurrentMass();
+
+        printf("ADC Value(dec): %d\n", p_adc_value);
+        printf("ADC Voltage(V): %f\n", p_adc_voltage);
+        printf("Pressure(mBars): %f\n", pressure_bars * 1000);
+        printf("Height(m): %f\n\n", current_height);
+
+        printf("Pulse Counter Value: %d\n", static_cast<int>(totalPulseCounts));
+        printf("Total Volume(gal): %f\n", total_volume_gal);
+        printf("__________________________________________________________________________________ \n");
+
+        delay(1000);  // Can be lowered to get more readings / data points
+        // current_height += 10;
+    }
+    pumping = false;
+}
+
