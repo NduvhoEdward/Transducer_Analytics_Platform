@@ -127,7 +127,10 @@ void loop() {
     digitalWrite(PUMP_ON_LIGHT_PIN, LOW);
     digitalWrite(VALVE_CONTROL_PIN, LOW);
 
-    Serial.println("\n\nValve closed..... (Not pumping) \n\n");
+    Serial.println("\n\nValve closed..... (Not pumping) \n\n"); 
+    current_height = 0;
+    total_volume_gal = 0;
+    
     while (!pumping) {
         NOP();
     }
