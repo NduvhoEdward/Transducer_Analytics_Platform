@@ -1,11 +1,17 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>ESP IOT DASHBOARD</title>
+    <title>Pressure Precision Profiler Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <!-- <link rel="icon" type="image/png" href="favicon.png" />  -->
     <link rel="stylesheet" type="text/css" href="styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/regression/2.0.1/regression.min.js"
+      integrity="sha512-0k6FXllQktdobw8Nc8KQN2WtZrOuxpMn7jC2RKCF6LR7EdOhhrg3H5cBPxhs3CFzQVlO6ni1B9SDLUPhBs0Alg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <script src="script.js" defer></script>
   </head>
   <body>
@@ -16,29 +22,32 @@
       </div>
       <div class="content">
         <div class="cards">
+          <div class="mcu-buttons">
+            <button class="mcu-button" id="start-stop">Start/Stop</button>
+            <button class="mcu-button" id="reset">Reset</button>
+          </div>
+
           <div class="card">
-            <p class="card-title">
-              <i
-                class="fas fa-thermometer-threequarters"
-                style="color: #059e8a"
-              ></i>
-              Pressure
-            </p>
-            <p class="reading"><span id="pressure"></span> (mBar)</p>
+            <p class="card-title">Density</p>
+            <p class="reading"><span id="density"></span> kg/m³ </p>
           </div>
           <div class="card">
-            <p class="card-title">Height</p>
-            <p class="reading"><span id="height"></span> (m)</p>
+            <p class="card-title">Max Height</p>
+            <p class="reading"><span id="max_height"></span> m </p>
           </div>
           <div class="card">
-            <p class="card-title">Volume</p>
-            <p class="reading"><span id="volume"></span> (gal)</p>
+            <p class="card-title">K Factor</p>
+            <p class="reading"><span id="k_factor"></span> ppG </p>
+          </div>
+          <div class="card">
+            <p class="card-title">Sampling Rate</p>
+            <p class="reading"><span id="sampling_rate"></span> Hz </p>
           </div>
         </div>
 
         <div class="chart">
-          <!-- <canvas id="realtimeChart" width="100%" height="100%"></canvas>  -->
-          <canvas id="realtimeChart" width="100%" height="100%"></canvas>
+          <canvas id="realtimeChart" width="100%" height="60%"></canvas>
+          <!-- <canvas id="realtimeChart"></canvas> -->
         </div>
 
         <div class="rawData">
@@ -46,12 +55,19 @@
             <thead>
               <tr>
                 <th>Height</th>
-                <th>Volume</th> 
+                <th>Volume</th>
               </tr>
             </thead>
             <tbody id="dataTableBody"></tbody>
           </table>
         </div>
+      </div>
+
+      <div id="equationText"></div>
+
+      <div class="lower-buttons">
+        <button id="fitButton">Fit Curve</button>
+        <button id="exportButton">Export as CSV</button>
       </div>
 
       <footer>iMining</footer>

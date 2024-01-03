@@ -23,11 +23,12 @@
 #define PT_MIN_CUR_IN_mA 4.0
 #define PT_MAX_CUR_IN_mA 20.0
 #define P_MIN 0.0
-#define P_MAX 1.0
+#define P_MAX 0.250  // -------------------------------------------??????????????????
 
-#define F_SENSOR_K_FACTOR_PPG 197.77
-#define TANK_MAX_HEIGHT 10
-#define DENSITY 1000
+#define F_SENSOR_K_FACTOR_PPG 197.77  // --------------------------??????????????????
+#define TANK_MAX_HEIGHT 1             // ------------------------------------??????????????????
+#define DENSITY 1000                  // ------------------------------------------??????????????????
+#define SAMPLING_RATE_MS 500          // ----------------------------------??????????????????
 
 uint16_t p_adc_value = 0;
 uint32_t totalPulseCounts = 0;
@@ -48,7 +49,7 @@ const int p_adc_max = 4095;  // 0xFFF;  // In adc 12bit mode
 float pressure_bars = 0.0;
 
 const float p_shunt_resistor = P_SHUNT_RESISTOR_OHMS;
-const float transmitter_min_cur = PT_MIN_CUR_IN_mA / 1000; 
+const float transmitter_min_cur = PT_MIN_CUR_IN_mA / 1000;
 const float transmitter_max_cur = PT_MAX_CUR_IN_mA / 1000;
 const float p_at_min_cur = P_MIN;
 const float p_at_max_cur = P_MAX;
@@ -90,7 +91,7 @@ float getCurrentMass();
 float p_adc_to_volts();
 void calib_adc_and_v();
 float get_p_from_v();
-void IRAM_ATTR start_pumping();
+void IRAM_ATTR start_stop_pumping();
 void pump();
 
 String getSensorReadings();
@@ -108,7 +109,7 @@ void setup() {
     calib_adc_and_v();
     pulseCounterInit();
 
-    attachInterrupt(START_PUMP_BUTTON, start_pumping, HIGH);
+    attachInterrupt(START_PUMP_BUTTON, start_stop_pumping, HIGH);
 
     initWiFi();
     initSPIFFS();
@@ -127,10 +128,10 @@ void loop() {
     digitalWrite(PUMP_ON_LIGHT_PIN, LOW);
     digitalWrite(VALVE_CONTROL_PIN, LOW);
 
-    Serial.println("\n\nValve closed..... (Not pumping) \n\n"); 
+    Serial.println("\n\nValve closed..... (Not pumping) \n\n");
     current_height = 0;
     total_volume_gal = 0;
-    
+
     while (!pumping) {
         NOP();
     }
@@ -226,7 +227,7 @@ float getCurrentMass() {
     return totalPulseCounts / k_factor;
 }
 
-void IRAM_ATTR start_pumping() {
+void IRAM_ATTR start_stop_pumping() {
     unsigned long currentMillis = millis();
 
     // Check if enough time has passed since the last interrupt
@@ -242,7 +243,7 @@ void IRAM_ATTR start_pumping() {
 }
 
 void pump() {
-    Serial.println("\\n\nValve open..... (Pumping)\n\n");
+    Serial.println("\n\nValve open..... (Pumping)\n\n");
     digitalWrite(VALVE_CONTROL_PIN, HIGH);
     digitalWrite(PUMP_OFF_LIGHT_PIN, LOW);
     digitalWrite(PUMP_ON_LIGHT_PIN, HIGH);
@@ -250,7 +251,7 @@ void pump() {
     // Print headers
     Serial.println("ADC Value(dec)\tADC Voltage(V)\tPressure(mBars)\tHeight(m)\tPulse Counter Value\tTotal Volume(gal)");
 
-    while (current_height < 0.95 * TANK_MAX_HEIGHT && pumping == true) {
+    while (current_height < 0.80 * TANK_MAX_HEIGHT && pumping == true) {
         p_adc_value = get_p_adc_value();
         p_adc_voltage = p_adc_to_volts();
         pressure_bars = get_p_from_v();
@@ -275,16 +276,20 @@ void pump() {
         String sensorReadings = getSensorReadings();
         notifyClients(sensorReadings);
 
-        delay(500);  // Can be lowered to get more readings / data points
+        delay(SAMPLING_RATE_MS);  // Can be lowered to get more readings / data points
     }
     pumping = false;
 }
 
 // Get Sensor Readings and return JSON object
 String getSensorReadings() {
-    readings["pressure"] = String(pressure_bars * 1000);
     readings["height"] = String(current_height);
     readings["volume"] = String(total_volume_gal);
+    readings["density"] = String(DENSITY);
+    readings["k_factor"] = String(F_SENSOR_K_FACTOR_PPG);
+    readings["max_height"] = String(TANK_MAX_HEIGHT);
+    readings["sampling_rate"] = String(1 / (static_cast<float>(SAMPLING_RATE_MS) / 1000));
+
     String jsonString = JSON.stringify(readings);
     return jsonString;
 }
@@ -316,14 +321,17 @@ void notifyClients(String sensorReadings) {
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     AwsFrameInfo *info = (AwsFrameInfo *)arg;
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
-        // data[len] = 0;
-        // String message = (char*)data;
-        //  Check if the message is "getReadings"
-        // if (strcmp((char*)data, "getReadings") == 0) {
-        // if it is, send current sensor readings
-        String sensorReadings = getSensorReadings();
-        notifyClients(sensorReadings);
-        //}
+        data[len] = 0;
+        String message = (char *)data; 
+
+        if (strcmp((char *)data, "getReadings") == 0) {
+            String sensorReadings = getSensorReadings();
+            notifyClients(sensorReadings);
+        } else if (strcmp((char *)data, "reset") == 0) {
+            ESP.restart();
+        } else if (strcmp((char *)data, "start_stop") == 0) {
+            start_stop_pumping();
+        }
     }
 }
 
