@@ -34,7 +34,7 @@ function onClose(event) {
 
 // Function that receives the message from the ESP32 with the readings
 function onMessage(event) {
-  console.log(event.data);
+  // console.log(event.data);
   var myObj = JSON.parse(event.data);
   var keys = Object.keys(myObj);
 
@@ -61,7 +61,6 @@ document.getElementById("reset").addEventListener("click", function() {
   sendMessage('reset');
   clearTable(); // Clear the table
   clearGraph(myChart); 
-
 });
 
 function sendMessage(message) {
@@ -155,7 +154,7 @@ function clearGraph(chart) {
 // let currentHeight = 0;
 // setInterval(() => {
 //   var beenDone = 0;
-//   if (currentHeight > 40) {
+//   if (currentHeight > 50) {
 
 //     if(beenDone == 1){
 //       return;
@@ -171,10 +170,6 @@ function clearGraph(chart) {
 
 //     const v = labels.map((label, index) => [label, data.datasets[0].data[index]]);
 
-//     console.log("Data points for regression:", pointsForRegression);
-
-//     console.log("Data points for regression-------:", v);
-//     // Perform polynomial regression
 //     const degree = 2;
 //     const result = regression.polynomial(
 //       data.labels.map((label, index) => [label, data.datasets[0].data[index]]),
@@ -182,15 +177,14 @@ function clearGraph(chart) {
 //     );
 
 //     const coefficients = result.equation;
-
-//     // console.log(`Polynomial Coefficients (Degree ${degree}):`, coefficients);
+//     coefficients.reverse();
 
 //     // Display the obtained polynomial equation
 //     const equationText = `Equation: ${coefficients
 //       .map((coefficient, index) => `${coefficient.toFixed(2)} * x^${index}`)
 //       .join(" + ")}`;
-//     console.log(`Polynomial Coefficients (Degree ${degree}):`, coefficients);
-//     console.log(equationText);
+//     // console.log(`Polynomial Coefficients (Degree ${degree}):`, coefficients);
+//     // console.log(equationText);
 
 //     // Display the equation on the HTML page (assuming you have an element with id 'equationText' in your HTML)
 //     const equationElement = document.getElementById("equationText");
@@ -202,7 +196,7 @@ function clearGraph(chart) {
 //   // Generate random data for simulation
 //   const newData = {
 //     height: currentHeight,
-//     volume: Math.ceil(Math.exp(currentHeight / 10)),
+//     volume: Math.ceil(Math.exp(currentHeight / 10)), 
 //   };
 
 //   // Update chart data
@@ -213,7 +207,7 @@ function clearGraph(chart) {
 //   myChart.update();
 //   updateTable();
 //   currentHeight += 1;
-// }, 500); // Adjust the interval as needed
+// }, 250); // Adjust the interval as needed
 
 // Function to convert data to CSV format
 function convertToCSV(data) {
@@ -252,13 +246,14 @@ function fitPolynomial() {
     { order: degree }
   );
   const coefficients = result.equation;
+  coefficients.reverse();
 
   // Display the obtained polynomial equation
   const equationText = `Equation: ${coefficients
     .map((coefficient, index) => `${coefficient.toFixed(2)} * x^${index}`)
     .join(" + ")}`;
-  console.log(`Polynomial Coefficients (Degree ${degree}):`, coefficients);
-  console.log(equationText);
+  // console.log(`Polynomial Coefficients (Degree ${degree}):`, coefficients);
+  // console.log(equationText);
 
   // Calculate y-values based on the equation
   const fittedData = data.labels.map((label) => {
