@@ -235,7 +235,7 @@ function downloadCSV() {
 const exportButton = document.getElementById("exportButton");
 exportButton.addEventListener("click", downloadCSV);
 
-// Fitting stuff
+// Fitting stuff 
 
 // Function to perform polynomial regression and update the chart
 function fitPolynomial() {
@@ -252,8 +252,6 @@ function fitPolynomial() {
   const equationText = `Equation: ${coefficients
     .map((coefficient, index) => `${coefficient.toFixed(2)} * x^${index}`)
     .join(" + ")}`;
-  // console.log(`Polynomial Coefficients (Degree ${degree}):`, coefficients);
-  // console.log(equationText);
 
   // Calculate y-values based on the equation
   const fittedData = data.labels.map((label) => {
@@ -289,3 +287,33 @@ function fitPolynomial() {
 const fitButton = document.getElementById("fitButton");
 fitButton.addEventListener("click", fitPolynomial);
 
+
+
+
+var cardID = '';
+function openModal(cardTitle) {
+  var modal = document.getElementById('myModal');
+  modal.style.display = 'block'; 
+  var modal_name = document.getElementById(cardTitle).parentNode.parentNode.querySelector('.card-title').textContent;
+  var modal_units = document.getElementById(cardTitle).parentNode.parentNode.querySelector('.reading').textContent;
+  var modal_title = `${modal_name} (${modal_units.trim()})`;
+  document.getElementById('modal-input-title').textContent = modal_title; 
+
+  cardID = cardTitle;
+}
+
+function closeModal() {
+  document.getElementById('myModal').style.display = 'none';
+}
+
+function sendCardData() {
+  var inputValue = document.getElementById('inputValue').value; 
+  if (inputValue === '') {
+    closeModal();
+    return;
+  }
+  websocket.send(`${cardID}:${inputValue}`);
+  console.log(`Sending data: ${cardID}:${inputValue}`);
+  document.getElementById('inputValue').value = ''; 
+  closeModal();
+}

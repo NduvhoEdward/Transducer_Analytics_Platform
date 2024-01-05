@@ -25,10 +25,10 @@
 #define P_MIN 0.0
 #define P_MAX 0.250  // -------------------------------------------??????????????????
 
-#define F_SENSOR_K_FACTOR_PPG 197.77  // --------------------------??????????????????
-#define TANK_MAX_HEIGHT 0.64          // ------------------------------------??????????????????
-#define DENSITY 1000                  // ------------------------------------------??????????????????
-#define SAMPLING_RATE_MS 500          // ----------------------------------??????????????????
+#define F_SENSOR_K_FACTOR_PPG 197.7699  // --------------------------??????????????????
+#define TANK_MAX_HEIGHT 0.64            // ------------------------------------??????????????????
+#define DENSITY 999                     // ------------------------------------------??????????????????
+#define SAMPLING_RATE_MS 750            // ----------------------------------??????????????????
 
 uint16_t p_adc_value = 0;
 uint32_t totalPulseCounts = 0;
@@ -46,7 +46,7 @@ const float grav_acc = 9.80665;
 const int bars_to_pa_multiplier = 100000;
 
 const int p_adc_max = 4095;  // 0xFFF;  // In adc 12bit mode
-float pressure_bars = 0.0; 
+float pressure_bars = 0.0;
 
 const float p_shunt_resistor = P_SHUNT_RESISTOR_OHMS;
 const float transmitter_min_cur = PT_MIN_CUR_IN_mA / 1000;
@@ -54,14 +54,12 @@ const float transmitter_max_cur = PT_MAX_CUR_IN_mA / 1000;
 const float p_at_min_cur = P_MIN;
 const float p_at_max_cur = P_MAX;
 
-// To be transmitted vars 
+// To be transmitted vars
 float density = DENSITY;
-float f_sensor_k_factor_ppg = F_SENSOR_K_FACTOR_PPG; 
-float tank_max_height = TANK_MAX_HEIGHT; 
-float sampling_rate_f = 1 / (static_cast<float>(SAMPLING_RATE_MS) / 1000); 
-uint32_t sampling_rate_ms = (1/(sampling_rate_f)) * 1000;
-
-
+float f_sensor_k_factor_ppg = F_SENSOR_K_FACTOR_PPG;
+float tank_max_height = TANK_MAX_HEIGHT;
+float sampling_rate_f = 1 / (static_cast<float>(SAMPLING_RATE_MS) / 1000);
+uint32_t sampling_rate_ms = (1 / (sampling_rate_f)) * 1000;
 
 const float v_at_min_cur = transmitter_min_cur * p_shunt_resistor;
 const float v_at_max_cur = transmitter_max_cur * p_shunt_resistor;
@@ -86,7 +84,6 @@ unsigned long lastTime = 0;  // Timer variables
 unsigned long timerDelay = 3000;
 
 // Volume reading vars
-const float k_factor = F_SENSOR_K_FACTOR_PPG;
 float total_volume_gal = 0.0;
 
 // function declarations:
@@ -110,6 +107,7 @@ void notifyClients(String sensorReadings);
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len);
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len);
 void initWebSocket();
+void handleNumericMessage(String message);
 
 void setup() {
     Serial.begin(115200);
@@ -233,7 +231,7 @@ uint32_t getTotalPulses() {
 }
 
 float getCurrentMass() {
-    return totalPulseCounts / k_factor;
+    return totalPulseCounts / f_sensor_k_factor_ppg;
 }
 
 void IRAM_ATTR start_stop_pumping() {
@@ -260,15 +258,15 @@ void pump() {
     // Print headers
     Serial.println("ADC Value(dec)\tADC Voltage(V)\tPressure(mBars)\tHeight(m)\tPulse Counter Value\tTotal Volume(gal)");
 
-    // while (current_height < 0.95 * TANK_MAX_HEIGHT && pumping == true) {
+    // while (current_height < 0.95 * tank_max_height && pumping == true) {
     while (pumping == true) {
-        if (current_height > 0.95 * TANK_MAX_HEIGHT) {
+        if (current_height > 0.95 * tank_max_height) {
             digitalWrite(PUMP_OFF_LIGHT_PIN, HIGH);
         }
         p_adc_value = get_p_adc_value();
         p_adc_voltage = p_adc_to_volts();
         pressure_bars = get_p_from_v();
-        current_height = (pressure_bars * bars_to_pa_multiplier) / (DENSITY * grav_acc);
+        current_height = (pressure_bars * bars_to_pa_multiplier) / (density * grav_acc);
 
         totalPulseCounts = getTotalPulses();
         total_volume_gal = getCurrentMass();
@@ -344,28 +342,54 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
             ESP.restart();
         } else if (strcmp((char *)data, "start_stop") == 0) {
             start_stop_pumping();
+        } else {
+            handleNumericMessage(message);
         }
     }
 }
+void handleNumericMessage(String message) {
+    // Split the message into type and value
+    int separatorIndex = message.indexOf(':');
+    if (separatorIndex != -1) {
+        String variableType = message.substring(0, separatorIndex);
+        float variableValue = message.substring(separatorIndex + 1).toFloat();
 
-void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-    switch (type) {
-        case WS_EVT_CONNECT:
-            Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
-            break;
-        case WS_EVT_DISCONNECT:
-            Serial.printf("WebSocket client #%u disconnected\n", client->id());
-            break;
-        case WS_EVT_DATA:
-            handleWebSocketMessage(arg, data, len);
-            break;
-        case WS_EVT_PONG:
-        case WS_EVT_ERROR:
-            break;
+        // Handle different variable types
+        if (variableType == "density") {
+            density = variableValue;
+        } else if (variableType == "max_height") {
+            tank_max_height = variableValue;
+        } else if (variableType == "k_factor") {
+            f_sensor_k_factor_ppg = variableValue;
+        } else if (variableType == "sampling_rate") {
+            sampling_rate_f = variableValue;
+        } else {
+            Serial.println("Unknown variable type");
+        }
+    } else {
+        Serial.println("Invalid numeric message format");
     }
+    notifyClients(getSensorReadings());
 }
 
-void initWebSocket() {
-    ws.onEvent(onEvent);
-    server.addHandler(&ws);
-}
+    void onEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+        switch (type) {
+            case WS_EVT_CONNECT:
+                Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+                break;
+            case WS_EVT_DISCONNECT:
+                Serial.printf("WebSocket client #%u disconnected\n", client->id());
+                break;
+            case WS_EVT_DATA:
+                handleWebSocketMessage(arg, data, len);
+                break;
+            case WS_EVT_PONG:
+            case WS_EVT_ERROR:
+                break;
+        }
+    }
+
+    void initWebSocket() {
+        ws.onEvent(onEvent);
+        server.addHandler(&ws);
+    }

@@ -27,22 +27,28 @@
             <button class="mcu-button" id="reset">Reset</button>
           </div>
 
-          <div class="card">
+          <div class="card" ondblclick="openModal('density')">
             <p class="card-title">Density</p>
             <p class="reading"><span id="density"></span> kg/m³ </p>
           </div>
-          <div class="card">
+          <div class="card" ondblclick="openModal('max_height')">
             <p class="card-title">Max Height</p>
             <p class="reading"><span id="max_height"></span> m </p>
           </div>
-          <div class="card">
+          <div class="card" ondblclick="openModal('k_factor')">
             <p class="card-title">K Factor</p>
             <p class="reading"><span id="k_factor"></span> ppG </p>
           </div>
-          <div class="card">
-            <p class="card-title">Sampling Rate</p>
+          <div class="card" ondblclick="openModal('sampling_rate')">
+            <p class="card-title">Sampling Rate</p> 
             <p class="reading"><span id="sampling_rate"></span> Hz </p>
           </div>
+        </div>
+
+        <div id="myModal" class="modal">
+          <span id="modal-close" onclick="closeModal()" style="cursor: pointer;">&times;</span>
+          <p class="modal-input-stuff"> <span id="modal-input-title"></span> <input type="number" step="any" id="inputValue"></p>
+          <button id="modal-send" onclick="sendCardData()">Send</button>
         </div>
 
         <div class="chart">
