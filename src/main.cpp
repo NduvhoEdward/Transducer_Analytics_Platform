@@ -26,7 +26,7 @@
 #define P_MAX 0.250  // -------------------------------------------??????????????????
 
 #define F_SENSOR_K_FACTOR_PPG 197.77  // --------------------------??????????????????
-#define TANK_MAX_HEIGHT 1             // ------------------------------------??????????????????
+#define TANK_MAX_HEIGHT 0.64          // ------------------------------------??????????????????
 #define DENSITY 1000                  // ------------------------------------------??????????????????
 #define SAMPLING_RATE_MS 500          // ----------------------------------??????????????????
 
@@ -251,7 +251,11 @@ void pump() {
     // Print headers
     Serial.println("ADC Value(dec)\tADC Voltage(V)\tPressure(mBars)\tHeight(m)\tPulse Counter Value\tTotal Volume(gal)");
 
-    while (current_height < 0.80 * TANK_MAX_HEIGHT && pumping == true) {
+    // while (current_height < 0.95 * TANK_MAX_HEIGHT && pumping == true) {
+    while (pumping == true) {
+        if (current_height > 0.95 * TANK_MAX_HEIGHT) {
+            digitalWrite(PUMP_OFF_LIGHT_PIN, HIGH);
+        }
         p_adc_value = get_p_adc_value();
         p_adc_voltage = p_adc_to_volts();
         pressure_bars = get_p_from_v();
@@ -322,7 +326,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     AwsFrameInfo *info = (AwsFrameInfo *)arg;
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
         data[len] = 0;
-        String message = (char *)data; 
+        String message = (char *)data;
 
         if (strcmp((char *)data, "getReadings") == 0) {
             String sensorReadings = getSensorReadings();
