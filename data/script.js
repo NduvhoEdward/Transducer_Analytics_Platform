@@ -35,8 +35,8 @@ function onClose(event) {
 // Function that receives the message from the ESP32 with the readings
 function onMessage(event) {
   // console.log(event.data);
-  var myObj = JSON.parse(event.data);
-  var keys = Object.keys(myObj);
+  var data_from_mcu = JSON.parse(event.data);
+  var keys = Object.keys(data_from_mcu);
 
   for (var i = 0; i < keys.length; i++) {
     var key = keys[i];
@@ -44,12 +44,12 @@ function onMessage(event) {
     if (key === "height" || key === "volume") {
       continue;
     }
-    document.getElementById(key).innerHTML = myObj[key];
+    document.getElementById(key).innerHTML = data_from_mcu[key];
   }
 
   // Plotting stuff
-  data.labels.push(myObj.height);
-  data.datasets[0].data.push(myObj.volume);
+  data.labels.push(data_from_mcu.height);
+  data.datasets[0].data.push(data_from_mcu.volume);
   myChart.update();
   updateTable();
 }

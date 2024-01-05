@@ -46,13 +46,22 @@ const float grav_acc = 9.80665;
 const int bars_to_pa_multiplier = 100000;
 
 const int p_adc_max = 4095;  // 0xFFF;  // In adc 12bit mode
-float pressure_bars = 0.0;
+float pressure_bars = 0.0; 
 
 const float p_shunt_resistor = P_SHUNT_RESISTOR_OHMS;
 const float transmitter_min_cur = PT_MIN_CUR_IN_mA / 1000;
 const float transmitter_max_cur = PT_MAX_CUR_IN_mA / 1000;
 const float p_at_min_cur = P_MIN;
 const float p_at_max_cur = P_MAX;
+
+// To be transmitted vars 
+float density = DENSITY;
+float f_sensor_k_factor_ppg = F_SENSOR_K_FACTOR_PPG; 
+float tank_max_height = TANK_MAX_HEIGHT; 
+float sampling_rate_f = 1 / (static_cast<float>(SAMPLING_RATE_MS) / 1000); 
+uint32_t sampling_rate_ms = (1/(sampling_rate_f)) * 1000;
+
+
 
 const float v_at_min_cur = transmitter_min_cur * p_shunt_resistor;
 const float v_at_max_cur = transmitter_max_cur * p_shunt_resistor;
@@ -280,7 +289,7 @@ void pump() {
         String sensorReadings = getSensorReadings();
         notifyClients(sensorReadings);
 
-        delay(SAMPLING_RATE_MS);  // Can be lowered to get more readings / data points
+        delay(sampling_rate_ms);  // Can be lowered to get more readings / data points
     }
     pumping = false;
 }
@@ -289,10 +298,10 @@ void pump() {
 String getSensorReadings() {
     readings["height"] = String(current_height);
     readings["volume"] = String(total_volume_gal);
-    readings["density"] = String(DENSITY);
-    readings["k_factor"] = String(F_SENSOR_K_FACTOR_PPG);
-    readings["max_height"] = String(TANK_MAX_HEIGHT);
-    readings["sampling_rate"] = String(1 / (static_cast<float>(SAMPLING_RATE_MS) / 1000));
+    readings["density"] = String(density);
+    readings["k_factor"] = String(f_sensor_k_factor_ppg);
+    readings["max_height"] = String(tank_max_height);
+    readings["sampling_rate"] = String(sampling_rate_f);
 
     String jsonString = JSON.stringify(readings);
     return jsonString;
