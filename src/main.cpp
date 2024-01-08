@@ -4,9 +4,9 @@
 #include <ESPAsyncWebServer.h>
 #include <WiFi.h>
 #include <driver/pcnt.h>
-
 #include "SPIFFS.h"
 #include "driver/adc.h"
+#include <Preferences.h>
 
 #define PRESSURE_TRANSMITTER_PIN GPIO_NUM_34
 #define PULSE_COUNTER_PIN GPIO_NUM_36
@@ -25,7 +25,7 @@
 #define P_MIN 0.0
 #define P_MAX 0.250  // -------------------------------------------??????????????????
 
-#define F_SENSOR_K_FACTOR_PPG 197.7699  // --------------------------??????????????????
+#define F_SENSOR_K_FACTOR_PPG 197.77    // --------------------------??????????????????
 #define TANK_MAX_HEIGHT 0.64            // ------------------------------------??????????????????
 #define DENSITY 999                     // ------------------------------------------??????????????????
 #define SAMPLING_RATE_MS 750            // ----------------------------------??????????????????
@@ -338,6 +338,11 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         if (strcmp((char *)data, "getReadings") == 0) {
             String sensorReadings = getSensorReadings();
             notifyClients(sensorReadings);
+        } else if (strcmp((char *)data, "clear") == 0) {
+            current_height = 0; 
+            totalPulseCounts = 0; 
+            pumping = false;
+            maxCountsCycle = 0;
         } else if (strcmp((char *)data, "reset") == 0) {
             ESP.restart();
         } else if (strcmp((char *)data, "start_stop") == 0) {

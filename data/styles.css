@@ -124,11 +124,19 @@ button {
   margin: 1rem;
 }
 
-.mcu-buttons > * {
+.mcu-buttons > *, 
+.mcu-buttons > .top-buttons > * {
   padding: 0.5rem;
   font-size: 1.0rem;
   align-self: self-end;
 }
+
+.top-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 0;
+}
+
 #start-stop {
   /* border: 4px solid green; */
 }
@@ -175,4 +183,9 @@ button {
   text-align: center;
   font-weight: bold;
   font-size: large;
+}
+
+.reset {
+  width: 100%;
+  margin: 0.75rem 0;
 }

@@ -57,10 +57,15 @@ function onMessage(event) {
 document.getElementById("start-stop").addEventListener("click", function () {
   sendMessage("start_stop");
 });
-document.getElementById("reset").addEventListener("click", function() {
-  sendMessage('reset');
-  clearTable(); // Clear the table
+document.getElementById("clear").addEventListener("click", function () {
+  clearTable(); 
   clearGraph(myChart); 
+  sendMessage("clear");
+});
+document.getElementById("reset").addEventListener("click", function() {
+  clearTable(); 
+  clearGraph(myChart); 
+  sendMessage('reset');
 });
 
 function sendMessage(message) {
@@ -311,7 +316,6 @@ function sendCardData() {
   if (inputValue === '') {
     closeModal();
     return;
-  }
   websocket.send(`${cardID}:${inputValue}`);
   console.log(`Sending data: ${cardID}:${inputValue}`);
   document.getElementById('inputValue').value = ''; 
