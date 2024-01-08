@@ -156,78 +156,93 @@ function clearGraph(chart) {
   chart.update(); // Update the chart to reflect the changes
 }
 // Simulation
-// let currentHeight = 0;
-// setInterval(() => {
-//   var beenDone = 0;
-//   if (currentHeight > 50) {
+let currentHeight = 0;
+setInterval(() => {
+  var beenDone = 0;
+  if (currentHeight > 50) {
 
-//     if(beenDone == 1){
-//       return;
-//     }
-//     // Log the data points before regression
-//     const labels = data.labels.slice(1);
-//     const datasetData = data.datasets[0].data.slice(1);
+    if(beenDone == 1){
+      return;
+    }
+    // Log the data points before regression
+    const labels = data.labels.slice(1);
+    const datasetData = data.datasets[0].data.slice(1);
 
-//     const pointsForRegression = labels.map((label, index) => [
-//       label,
-//       datasetData[index],
-//     ]);
+    const pointsForRegression = labels.map((label, index) => [
+      label,
+      datasetData[index],
+    ]);
 
-//     const v = labels.map((label, index) => [label, data.datasets[0].data[index]]);
+    const v = labels.map((label, index) => [label, data.datasets[0].data[index]]);
 
-//     const degree = 2;
-//     const result = regression.polynomial(
-//       data.labels.map((label, index) => [label, data.datasets[0].data[index]]),
-//       { order: degree }
-//     );
+    const degree = 2;
+    const result = regression.polynomial(
+      data.labels.map((label, index) => [label, data.datasets[0].data[index]]),
+      { order: degree }
+    );
 
-//     const coefficients = result.equation;
-//     coefficients.reverse();
+    const coefficients = result.equation;
+    coefficients.reverse();
 
-//     // Display the obtained polynomial equation
-//     const equationText = `Equation: ${coefficients
-//       .map((coefficient, index) => `${coefficient.toFixed(2)} * x^${index}`)
-//       .join(" + ")}`;
-//     // console.log(`Polynomial Coefficients (Degree ${degree}):`, coefficients);
-//     // console.log(equationText);
+    // Display the obtained polynomial equation
+    const equationText = `Equation: ${coefficients
+      .map((coefficient, index) => `${coefficient.toFixed(2)} * x^${index}`)
+      .join(" + ")}`;
+    // console.log(`Polynomial Coefficients (Degree ${degree}):`, coefficients);
+    // console.log(equationText);
 
-//     // Display the equation on the HTML page (assuming you have an element with id 'equationText' in your HTML)
-//     const equationElement = document.getElementById("equationText");
-//     equationElement.textContent = equationText;
-//     beenDone = 1;
-//     return;
-//   }
+    // Display the equation on the HTML page (assuming you have an element with id 'equationText' in your HTML)
+    const equationElement = document.getElementById("equationText");
+    equationElement.textContent = equationText;
+    beenDone = 1;
+    return;
+  }
 
-//   // Generate random data for simulation
-//   const newData = {
-//     height: currentHeight,
-//     volume: Math.ceil(Math.exp(currentHeight / 10)), 
-//   };
+  // Generate random data for simulation
+  const newData = {
+    height: currentHeight,
+    volume: Math.ceil(Math.exp(currentHeight / 10)), 
+  };
 
-//   // Update chart data
-//   data.labels.push(newData.height);
-//   data.datasets[0].data.push(newData.volume);
+  // Update chart data
+  data.labels.push(newData.height);
+  data.datasets[0].data.push(newData.volume);
 
-//   // Update the chart
-//   myChart.update();
-//   updateTable();
-//   currentHeight += 1;
-// }, 250); // Adjust the interval as needed
+  // Update the chart
+  myChart.update();
+  updateTable();
+  currentHeight += 1;
+}, 250); // Adjust the interval as needed
 
-// Function to convert data to CSV format
-function convertToCSV(data) {
-  const header = ["Height", "Volume"];
-  const rows = data.labels.map((label, index) => [
+// Function to convert data to CSV format with additional details
+function convertToCSV(data, metadata) {
+  const mainHeader = ["Height", "Volume"];
+  const mainRows = data.labels.map((label, index) => [
     label,
     data.datasets[0].data[index],
   ]);
-  const allRows = [header, ...rows];
-  return allRows.map((row) => row.join(",")).join("\n");
+
+  const mainCSV = [mainHeader, ...mainRows].map((row) => row.join(",")).join("\n");
+  const csvContent = `# Metadata: ${JSON.stringify(metadata)}\n${mainCSV}`;
+
+  return csvContent;
 }
 
 // Function to download CSV file
 function downloadCSV() {
-  const csvContent = convertToCSV(data);
+
+  console.log("COWNLOAD CALLED");
+
+  const currentDate = new Date();
+  const formattedDateTime = currentDate.toISOString();
+  const metadata = {
+    Time: formattedDateTime,
+    Density: document.getElementById('density').textContent,
+    Max_Height: document.getElementById('max_height').textContent,
+    K_Factor: document.getElementById('k_factor').textContent,
+    Sampling_Rate: document.getElementById('sampling_rate').textContent,
+  };
+  const csvContent = convertToCSV(data, metadata);
   const blob = new Blob([csvContent], { type: "text/csv" });
   const link = document.createElement("a");
   link.href = window.URL.createObjectURL(blob);
@@ -292,9 +307,6 @@ function fitPolynomial() {
 const fitButton = document.getElementById("fitButton");
 fitButton.addEventListener("click", fitPolynomial);
 
-
-
-
 var cardID = '';
 function openModal(cardTitle) {
   var modal = document.getElementById('myModal');
@@ -316,6 +328,7 @@ function sendCardData() {
   if (inputValue === '') {
     closeModal();
     return;
+  }
   websocket.send(`${cardID}:${inputValue}`);
   console.log(`Sending data: ${cardID}:${inputValue}`);
   document.getElementById('inputValue').value = ''; 
