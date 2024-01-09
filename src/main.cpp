@@ -6,7 +6,6 @@
 #include <driver/pcnt.h>
 #include "SPIFFS.h"
 #include "driver/adc.h"
-#include <Preferences.h>
 
 #define PRESSURE_TRANSMITTER_PIN GPIO_NUM_34
 #define PULSE_COUNTER_PIN GPIO_NUM_36
@@ -93,7 +92,7 @@ static void IRAM_ATTR pulseCounterISR(void *arg);
 uint32_t getTotalPulses();
 void adcInit();
 uint16_t get_p_adc_value();
-float getCurrentMass();
+float getCurrentVolume();
 float p_adc_to_volts();
 void calib_adc_and_v();
 float get_p_from_v();
@@ -230,13 +229,12 @@ uint32_t getTotalPulses() {
     return total_pls;
 }
 
-float getCurrentMass() {
+float getCurrentVolume() {
     return totalPulseCounts / f_sensor_k_factor_ppg;
 }
 
 void IRAM_ATTR start_stop_pumping() {
     unsigned long currentMillis = millis();
-
     // Check if enough time has passed since the last interrupt
     if (currentMillis - lastDebounceTime >= debounceDelay) {
         lastDebounceTime = currentMillis;
@@ -269,7 +267,7 @@ void pump() {
         current_height = (pressure_bars * bars_to_pa_multiplier) / (density * grav_acc);
 
         totalPulseCounts = getTotalPulses();
-        total_volume_gal = getCurrentMass();
+        total_volume_gal = getCurrentVolume();
 
         // Data
         Serial.print(p_adc_value);
@@ -340,9 +338,9 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
             notifyClients(sensorReadings);
         } else if (strcmp((char *)data, "clear") == 0) {
             current_height = 0; 
+            maxCountsCycle = 0;
             totalPulseCounts = 0; 
             pumping = false;
-            maxCountsCycle = 0;
         } else if (strcmp((char *)data, "reset") == 0) {
             ESP.restart();
         } else if (strcmp((char *)data, "start_stop") == 0) {
@@ -356,17 +354,17 @@ void handleNumericMessage(String message) {
     // Split the message into type and value
     int separatorIndex = message.indexOf(':');
     if (separatorIndex != -1) {
-        String variableType = message.substring(0, separatorIndex);
+        String variableName = message.substring(0, separatorIndex);
         float variableValue = message.substring(separatorIndex + 1).toFloat();
 
         // Handle different variable types
-        if (variableType == "density") {
+        if (variableName == "density") {
             density = variableValue;
-        } else if (variableType == "max_height") {
+        } else if (variableName == "max_height") {
             tank_max_height = variableValue;
-        } else if (variableType == "k_factor") {
+        } else if (variableName == "k_factor") {
             f_sensor_k_factor_ppg = variableValue;
-        } else if (variableType == "sampling_rate") {
+        } else if (variableName == "sampling_rate") {
             sampling_rate_f = variableValue;
         } else {
             Serial.println("Unknown variable type");
@@ -377,24 +375,24 @@ void handleNumericMessage(String message) {
     notifyClients(getSensorReadings());
 }
 
-    void onEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
-        switch (type) {
-            case WS_EVT_CONNECT:
-                Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
-                break;
-            case WS_EVT_DISCONNECT:
-                Serial.printf("WebSocket client #%u disconnected\n", client->id());
-                break;
-            case WS_EVT_DATA:
-                handleWebSocketMessage(arg, data, len);
-                break;
-            case WS_EVT_PONG:
-            case WS_EVT_ERROR:
-                break;
-        }
+void onEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+    switch (type) {
+        case WS_EVT_CONNECT:
+            Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+            break;
+        case WS_EVT_DISCONNECT:
+            Serial.printf("WebSocket client #%u disconnected\n", client->id());
+            break;
+        case WS_EVT_DATA:
+            handleWebSocketMessage(arg, data, len);
+            break;
+        case WS_EVT_PONG:
+        case WS_EVT_ERROR:
+            break;
     }
+}
 
-    void initWebSocket() {
-        ws.onEvent(onEvent);
-        server.addHandler(&ws);
-    }
+void initWebSocket() {
+    ws.onEvent(onEvent);
+    server.addHandler(&ws);
+}

@@ -1,3 +1,7 @@
+/* Sections' hierarchy inherited from the index.html file. 
+Used to order styles and the script file, to aid in locating 
+relevant html sections being styled or js manipulated */
+
 :root {
   --primary-orange: #f5911e;
   --secondary-orange: #ffb964;
@@ -6,6 +10,7 @@
 
 }
 
+/* Section 0 */
 * {
   padding: 0;
   margin: 0;
@@ -16,9 +21,21 @@ html {
   font-family: Arial, Helvetica, sans-serif;
   text-align: center;
 }
-h1 {
-  font-size: 1.8rem;
+
+/* Section 1 */
+.home {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background-color: var(--tertiary-orange);
+  color: var(--tertiary-orange);
 }
+
+
+/* Section 1.1 -- Top Nav */
 .topnav,
 footer {
   background-color: var(--primary-navy);
@@ -30,20 +47,9 @@ footer {
 .topnav {
   padding: 1rem;
 }
-footer {
-  padding: 0.5rem;
-}
 
-.home {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
-  background-color: var(--tertiary-orange);
-  color: var(--tertiary-orange);
-}
+
+/* Section 1.2 -- Content */
 .content {
   padding: 1rem;
   height: 100%;
@@ -52,12 +58,39 @@ footer {
   grid-template-columns: 0.75fr 4fr 1fr;
   gap: 10px;
 }
+/* Section 1.2.1 -- Cards */
 .cards {
   display: flex;
   flex-direction: column;
   height: 100%;
   justify-content: space-around;
 }
+
+button {
+  background-color: var(--primary-navy);
+  box-shadow: 0 0.5rem 0.5rem rgba(0, 0, 0, 0.4);
+  color: var(--tertiary-orange); 
+  align-self: center;
+}
+.mcu-buttons > *, 
+.mcu-buttons > .top-buttons > * {
+  padding: 0.5rem;
+  font-size: 1.0rem;
+  align-self: self-end;
+}
+.top-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 0;
+}
+.mcu-button {
+  border-radius: 10%;
+}
+.reset {
+  width: 100%;
+  margin: 0.75rem 0;
+}
+
 .card {
   background-color: var(--primary-navy);
   box-shadow: 2px 2px 12px 1px rgba(140, 140, 140, 0.5);
@@ -74,80 +107,8 @@ footer {
   color: var(--secondary-orange);
 }
 
-.rawData {
-  height: 65vh;
-  overflow: auto;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 2rem;
-  color: var(--primary-navy); 
-  padding-top: 0.78rem;
-}
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
 
-th, td {
-  border: 1px solid var(--primary-navy);
-  text-align: left;
-  padding: 8px;
-}
-
-th {
-  background-color: var(--primary-navy); 
-  color: var(--primary-orange); 
-}
-
-.chart {
-  height: 65vh;
-  width: 100%;
-}
-.chart canvas {
-  max-height: 100%;
-  width: 100%;
-}
-
-button {
-  background-color: var(--primary-navy);
-  box-shadow: 0 0.5rem 0.5rem rgba(0, 0, 0, 0.4);
-  color: var(--tertiary-orange); 
-  align-self: center;
-}
-.lower-buttons > button {
-  padding: 1rem;
-  width: 15rem;
-  border-radius: 0.5rem;
-  margin-bottom: 2rem;
-  margin: 1rem;
-}
-
-.mcu-buttons > *, 
-.mcu-buttons > .top-buttons > * {
-  padding: 0.5rem;
-  font-size: 1.0rem;
-  align-self: self-end;
-}
-
-.top-buttons {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  padding: 0;
-}
-
-#start-stop {
-  /* border: 4px solid green; */
-}
-.mcu-button {
-  border-radius: 10%;
-}
-
-#equationText {
-  color: var(--primary-navy);
-}
-
+/* Section 1.2.2 -- Modal */
 .modal {
   display: none;
   position: fixed;
@@ -165,7 +126,6 @@ button {
 #modal-close {
   padding-left: 95%;
 }
-
 #modal-send {
   width: 100%;
   border-radius: inherit;
@@ -175,7 +135,6 @@ button {
   font-size: large;
   font-weight: bold;
 }
-
 #inputValue {
   width: 80%;
   margin: 4px auto;
@@ -185,7 +144,57 @@ button {
   font-size: large;
 }
 
-.reset {
+/* Section 1.2.3 -- Chart */
+.chart {
+  height: 65vh;
   width: 100%;
-  margin: 0.75rem 0;
+}
+.chart canvas {
+  max-height: 100%;
+  width: 100%;
+}
+
+/* Section 1.2.4 -- Raw Data */
+.rawData {
+  height: 65vh;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 2rem;
+  color: var(--primary-navy); 
+  padding-top: 0.78rem;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+th, td {
+  border: 1px solid var(--primary-navy);
+  text-align: left;
+  padding: 8px;
+}
+th {
+  background-color: var(--primary-navy); 
+  color: var(--primary-orange); 
+}
+
+/* Section 1.3 -- Equation Text */
+#equationText {
+  color: var(--primary-navy);
+}
+
+/* Section 1.4 -- Lower Buttons */
+.lower-buttons > button {
+  padding: 1rem;
+  width: 15rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+  margin: 1rem;
+}
+
+/* Section 1.5 -- Footer */
+footer {
+  padding: 0.5rem;
 }

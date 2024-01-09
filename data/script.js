@@ -1,59 +1,8 @@
-// import { PolynomialRegression } from 'ml-regression-polynomial';
+// Sections inherited from the styles.css file, which got its 
+// section hierarchy from the index.html file. 
 
-var gateway = `ws://${window.location.hostname}/ws`;
-var websocket;
-// Init web socket when the page loads
-window.addEventListener("load", onload);
 
-function onload(event) {
-  initWebSocket();
-}
-
-function getReadings() {
-  websocket.send("getReadings");
-}
-
-function initWebSocket() {
-  console.log("Trying to open a WebSocket connection…");
-  websocket = new WebSocket(gateway);
-  websocket.onopen = onOpen;
-  websocket.onclose = onClose;
-  websocket.onmessage = onMessage;
-}
-
-// When websocket is established, call the getReadings() function
-function onOpen(event) {
-  console.log("Connection opened");
-  getReadings();
-}
-
-function onClose(event) {
-  console.log("Connection closed");
-  setTimeout(initWebSocket, 2000);
-}
-
-// Function that receives the message from the ESP32 with the readings
-function onMessage(event) {
-  // console.log(event.data);
-  var data_from_mcu = JSON.parse(event.data);
-  var keys = Object.keys(data_from_mcu);
-
-  for (var i = 0; i < keys.length; i++) {
-    var key = keys[i];
-
-    if (key === "height" || key === "volume") {
-      continue;
-    }
-    document.getElementById(key).innerHTML = data_from_mcu[key];
-  }
-
-  // Plotting stuff
-  data.labels.push(data_from_mcu.height);
-  data.datasets[0].data.push(data_from_mcu.volume);
-  myChart.update();
-  updateTable();
-}
-
+// Section 1.2.1 -- Cards >> MCU Buttons 
 document.getElementById("start-stop").addEventListener("click", function () {
   sendMessage("start_stop");
 });
@@ -67,7 +16,6 @@ document.getElementById("reset").addEventListener("click", function() {
   clearGraph(myChart); 
   sendMessage('reset');
 });
-
 function sendMessage(message) {
   if (websocket.readyState === WebSocket.OPEN) {
     websocket.send(message);
@@ -77,7 +25,35 @@ function sendMessage(message) {
   }
 }
 
-// Plotting stuff
+
+// Section 1.2.2 -- Modal 
+var cardID = '';
+function openModal(cardTitle) {
+  var modal = document.getElementById('myModal');
+  modal.style.display = 'block'; 
+  var modal_name = document.getElementById(cardTitle).parentNode.parentNode.querySelector('.card-title').textContent;
+  var modal_units = document.getElementById(cardTitle).parentNode.parentNode.querySelector('.reading').textContent;
+  var modal_title = `${modal_name} (${modal_units.trim()})`;
+  document.getElementById('modal-input-title').textContent = modal_title; 
+
+  cardID = cardTitle;
+}
+function closeModal() {
+  document.getElementById('myModal').style.display = 'none';
+}
+function sendCardData() {
+  var inputValue = document.getElementById('inputValue').value; 
+  if (inputValue === '') {
+    closeModal();
+    return;
+  }
+  websocket.send(`${cardID}:${inputValue}`);
+  console.log(`Sending data: ${cardID}:${inputValue}`);
+  document.getElementById('inputValue').value = ''; 
+  closeModal();
+}
+
+// Section 1.2.3 -- Chart 
 const ctx = document.getElementById("realtimeChart").getContext("2d");
 const data = {
   labels: [],
@@ -90,7 +66,6 @@ const data = {
     },
   ],
 };
-
 const config = {
   type: "line",
   data: data,
@@ -115,10 +90,17 @@ const config = {
     },
   },
 };
-
 const myChart = new Chart(ctx, config);
+function clearGraph(chart) {
+  chart.data.labels = [];
+  chart.data.datasets.forEach((dataset) => {
+      dataset.data = [];
+  });
+  chart.update(); // Update the chart to reflect the changes
+}
 
-// Update table function
+
+// Section 1.2.4 -- Raw Data >> Table 
 function updateTable() {
   const dataTableBody = document.getElementById("dataTableBody");
   const latestData = data.labels.map((label, index) => ({
@@ -140,124 +122,13 @@ function updateTable() {
     dataTableBody.appendChild(row);
   });
 }
-
-// Function to clear the table
 function clearTable() {
   const tableBody = document.getElementById("dataTableBody");
   tableBody.innerHTML = ""; 
 }
 
-// Function to clear the graph 
-function clearGraph(chart) {
-  chart.data.labels = [];
-  chart.data.datasets.forEach((dataset) => {
-      dataset.data = [];
-  });
-  chart.update(); // Update the chart to reflect the changes
-}
-// Simulation
-let currentHeight = 0;
-setInterval(() => {
-  var beenDone = 0;
-  if (currentHeight > 50) {
 
-    if(beenDone == 1){
-      return;
-    }
-    // Log the data points before regression
-    const labels = data.labels.slice(1);
-    const datasetData = data.datasets[0].data.slice(1);
-
-    const pointsForRegression = labels.map((label, index) => [
-      label,
-      datasetData[index],
-    ]);
-
-    const v = labels.map((label, index) => [label, data.datasets[0].data[index]]);
-
-    const degree = 2;
-    const result = regression.polynomial(
-      data.labels.map((label, index) => [label, data.datasets[0].data[index]]),
-      { order: degree }
-    );
-
-    const coefficients = result.equation;
-    coefficients.reverse();
-
-    // Display the obtained polynomial equation
-    const equationText = `Equation: ${coefficients
-      .map((coefficient, index) => `${coefficient.toFixed(2)} * x^${index}`)
-      .join(" + ")}`;
-    // console.log(`Polynomial Coefficients (Degree ${degree}):`, coefficients);
-    // console.log(equationText);
-
-    // Display the equation on the HTML page (assuming you have an element with id 'equationText' in your HTML)
-    const equationElement = document.getElementById("equationText");
-    equationElement.textContent = equationText;
-    beenDone = 1;
-    return;
-  }
-
-  // Generate random data for simulation
-  const newData = {
-    height: currentHeight,
-    volume: Math.ceil(Math.exp(currentHeight / 10)), 
-  };
-
-  // Update chart data
-  data.labels.push(newData.height);
-  data.datasets[0].data.push(newData.volume);
-
-  // Update the chart
-  myChart.update();
-  updateTable();
-  currentHeight += 1;
-}, 250); // Adjust the interval as needed
-
-// Function to convert data to CSV format with additional details
-function convertToCSV(data, metadata) {
-  const mainHeader = ["Height", "Volume"];
-  const mainRows = data.labels.map((label, index) => [
-    label,
-    data.datasets[0].data[index],
-  ]);
-
-  const mainCSV = [mainHeader, ...mainRows].map((row) => row.join(",")).join("\n");
-  const csvContent = `# Metadata: ${JSON.stringify(metadata)}\n${mainCSV}`;
-
-  return csvContent;
-}
-
-// Function to download CSV file
-function downloadCSV() {
-
-  console.log("COWNLOAD CALLED");
-
-  const currentDate = new Date();
-  const formattedDateTime = currentDate.toISOString();
-  const metadata = {
-    Time: formattedDateTime,
-    Density: document.getElementById('density').textContent,
-    Max_Height: document.getElementById('max_height').textContent,
-    K_Factor: document.getElementById('k_factor').textContent,
-    Sampling_Rate: document.getElementById('sampling_rate').textContent,
-  };
-  const csvContent = convertToCSV(data, metadata);
-  const blob = new Blob([csvContent], { type: "text/csv" });
-  const link = document.createElement("a");
-  link.href = window.URL.createObjectURL(blob);
-  link.download = "PressurePrecisionProfiler_data.csv";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-const exportButton = document.getElementById("exportButton");
-exportButton.addEventListener("click", downloadCSV);
-
-// Fitting stuff 
-
-// Function to perform polynomial regression and update the chart
+// Section 1.4 -- Lower Buttons 
 function fitPolynomial() {
   // Perform polynomial regression
   const degree = 2;
@@ -303,34 +174,151 @@ function fitPolynomial() {
 
   myChart.update();
 }
-
 const fitButton = document.getElementById("fitButton");
 fitButton.addEventListener("click", fitPolynomial);
 
-var cardID = '';
-function openModal(cardTitle) {
-  var modal = document.getElementById('myModal');
-  modal.style.display = 'block'; 
-  var modal_name = document.getElementById(cardTitle).parentNode.parentNode.querySelector('.card-title').textContent;
-  var modal_units = document.getElementById(cardTitle).parentNode.parentNode.querySelector('.reading').textContent;
-  var modal_title = `${modal_name} (${modal_units.trim()})`;
-  document.getElementById('modal-input-title').textContent = modal_title; 
+function convertToCSV(data, metadata) {
+  const mainHeader = ["Height", "Volume"];
+  const mainRows = data.labels.map((label, index) => [
+    label,
+    data.datasets[0].data[index],
+  ]);
 
-  cardID = cardTitle;
+  const mainCSV = [mainHeader, ...mainRows].map((row) => row.join(",")).join("\n");
+  const csvContent = `# Metadata: ${JSON.stringify(metadata)}\n${mainCSV}`;
+
+  return csvContent;
 }
+function downloadCSV() {
 
-function closeModal() {
-  document.getElementById('myModal').style.display = 'none';
+  console.log("COWNLOAD CALLED");
+
+  const currentDate = new Date();
+  const formattedDateTime = currentDate.toISOString();
+  const metadata = {
+    Time: formattedDateTime,
+    Density: document.getElementById('density').textContent,
+    Max_Height: document.getElementById('max_height').textContent,
+    K_Factor: document.getElementById('k_factor').textContent,
+    Sampling_Rate: document.getElementById('sampling_rate').textContent,
+  };
+  const csvContent = convertToCSV(data, metadata);
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = window.URL.createObjectURL(blob);
+  link.download = "PressurePrecisionProfiler_data.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
+const exportButton = document.getElementById("exportButton");
+exportButton.addEventListener("click", downloadCSV);
 
-function sendCardData() {
-  var inputValue = document.getElementById('inputValue').value; 
-  if (inputValue === '') {
-    closeModal();
-    return;
+
+// Section Z -- Mainly for the MCU stuff
+var gateway = `ws://${window.location.hostname}/ws`;
+var websocket;
+window.addEventListener("load", onload);
+function onload(event) {
+  initWebSocket();
+}
+function initWebSocket() {
+  console.log("Trying to open a WebSocket connection…");
+  websocket = new WebSocket(gateway);
+  websocket.onopen = onOpen;
+  websocket.onclose = onClose;
+  websocket.onmessage = onMessage;
+}
+function onOpen(event) {
+  console.log("Connection opened");
+  getReadings();
+}
+function getReadings() {
+  websocket.send("getReadings");
+}
+function onClose(event) {
+  console.log("Connection closed");
+  setTimeout(initWebSocket, 2000);
+}
+function onMessage(event) {
+  // console.log(event.data);
+  var data_from_mcu = JSON.parse(event.data);
+  var keys = Object.keys(data_from_mcu);
+
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+
+    if (key === "height" || key === "volume") {
+      continue;
+    }
+    document.getElementById(key).innerHTML = data_from_mcu[key];
   }
-  websocket.send(`${cardID}:${inputValue}`);
-  console.log(`Sending data: ${cardID}:${inputValue}`);
-  document.getElementById('inputValue').value = ''; 
-  closeModal();
+
+  // Plotting stuff
+  data.labels.push(data_from_mcu.height);
+  data.datasets[0].data.push(data_from_mcu.volume);
+  myChart.update();
+  updateTable();
 }
+
+
+// Section X -- Simulation Stuff
+// let currentHeight = 0;
+// setInterval(() => {
+//   var beenDone = 0;
+//   if (currentHeight > 5) {
+
+//     if(beenDone == 1){
+//       return;
+//     }
+//     // Log the data points before regression
+//     const labels = data.labels.slice(1);
+//     const datasetData = data.datasets[0].data.slice(1);
+
+//     const pointsForRegression = labels.map((label, index) => [
+//       label,
+//       datasetData[index],
+//     ]);
+
+//     const v = labels.map((label, index) => [label, data.datasets[0].data[index]]);
+
+//     const degree = 2;
+//     const result = regression.polynomial(
+//       data.labels.map((label, index) => [label, data.datasets[0].data[index]]),
+//       { order: degree }
+//     );
+
+//     const coefficients = result.equation;
+//     coefficients.reverse();
+
+//     // Display the obtained polynomial equation
+//     const equationText = `Equation: ${coefficients
+//       .map((coefficient, index) => `${coefficient.toFixed(2)} * x^${index}`)
+//       .join(" + ")}`;
+//     // console.log(`Polynomial Coefficients (Degree ${degree}):`, coefficients);
+//     // console.log(equationText);
+
+//     // Display the equation on the HTML page (assuming you have an element with id 'equationText' in your HTML)
+//     const equationElement = document.getElementById("equationText");
+//     equationElement.textContent = equationText;
+//     beenDone = 1;
+//     return;
+//   }
+
+//   // Generate random data for simulation
+//   const newData = {
+//     height: currentHeight,
+//     volume: Math.ceil(Math.exp(currentHeight / 10)), 
+//   };
+
+//   // Update chart data
+//   data.labels.push(newData.height);
+//   data.datasets[0].data.push(newData.volume);
+
+//   // Update the chart
+//   myChart.update();
+//   updateTable();
+//   currentHeight += 1;
+// }, 250); 
+
+
