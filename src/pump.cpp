@@ -1,8 +1,9 @@
-#include "variables.h"
 #include "pump.h"
-#include "sensors.h"
+
 #include "adc_functions.h"
-#include "volume_functions.h" 
+#include "sensors.h"
+#include "variables.h"
+#include "volume_functions.h"
 
 void IRAM_ATTR start_stop_pumping() {
     unsigned long currentMillis = millis();
@@ -20,6 +21,7 @@ void IRAM_ATTR start_stop_pumping() {
 
 void pump() {
     Serial.println("\n\nValve open..... (Pumping)\n\n");
+
     digitalWrite(VALVE_CONTROL_PIN, HIGH);
     digitalWrite(PUMP_OFF_LIGHT_PIN, LOW);
     digitalWrite(PUMP_ON_LIGHT_PIN, HIGH);
@@ -27,8 +29,8 @@ void pump() {
     // Print headers
     Serial.println("ADC Value(dec)\tADC Voltage(V)\tPressure(mBars)\tHeight(m)\tPulse Counter Value\tTotal Volume(gal)");
 
-    // while (current_height < 0.95 * tank_max_height && pumping == true) {
-    while (pumping == true) {
+    while (current_height < 0.95 * tank_max_height && pumping == true) {
+        // while (pumping == true) {
         if (current_height > 0.95 * tank_max_height) {
             digitalWrite(PUMP_OFF_LIGHT_PIN, HIGH);
         }
@@ -58,7 +60,10 @@ void pump() {
 
         delay(sampling_rate_ms);  // Can be lowered to get more readings / data points
     }
+
+    digitalWrite(VALVE_CONTROL_PIN, LOW);
+    digitalWrite(PUMP_OFF_LIGHT_PIN, HIGH);
+    digitalWrite(PUMP_ON_LIGHT_PIN, LOW);
+    
     pumping = false;
 }
-
-

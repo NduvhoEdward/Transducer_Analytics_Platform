@@ -28,16 +28,18 @@ extern const int bars_to_pa_multiplier;
 extern const int p_adc_max;
 extern float pressure_bars;
 
-extern const float p_shunt_resistor;
-extern const float transmitter_min_cur;
-extern const float transmitter_max_cur;
-extern const float p_at_min_cur;
-extern const float p_at_max_cur;
+extern float p_shunt_resistor;
+extern float pt_min_cur_in_mA; 
+extern float pt_max_cur_in_mA;
+extern float transmitter_min_cur;
+extern float transmitter_max_cur;
+extern float p_at_min_cur;
+extern float p_at_max_cur;
 
 extern float density;
 extern float f_sensor_k_factor_ppg;
 extern float tank_max_height;
-extern float sampling_rate_f;
+extern float sampling_rate_hz;
 extern uint32_t sampling_rate_ms;
 
 extern const float v_at_min_cur;

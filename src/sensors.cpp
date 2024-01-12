@@ -1,6 +1,7 @@
 #include "sensors.h"
-#include "variables.h"
+
 #include "pump.h"
+#include "variables.h"
 
 String getSensorReadings() {
     readings["height"] = String(current_height);
@@ -8,7 +9,7 @@ String getSensorReadings() {
     readings["density"] = String(density);
     readings["k_factor"] = String(f_sensor_k_factor_ppg);
     readings["max_height"] = String(tank_max_height);
-    readings["sampling_rate"] = String(sampling_rate_f);
+    readings["sampling_rate"] = String(sampling_rate_hz);
 
     String jsonString = JSON.stringify(readings);
     return jsonString;
@@ -28,7 +29,11 @@ void initWiFi() {
     Serial.print("Connecting to WiFi ..");
     while (WiFi.status() != WL_CONNECTED) {
         Serial.print('.');
-        delay(1000);
+
+        digitalWrite(CIRCUIT_READINESS_LED, HIGH);
+        delay(60);
+        digitalWrite(CIRCUIT_READINESS_LED, LOW);
+        delay(100);
     }
     Serial.println(WiFi.localIP());
 }
@@ -36,7 +41,6 @@ void initWiFi() {
 void notifyClients(String sensorReadings) {
     ws.textAll(sensorReadings);
 }
-
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     AwsFrameInfo *info = (AwsFrameInfo *)arg;
@@ -48,9 +52,9 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
             String sensorReadings = getSensorReadings();
             notifyClients(sensorReadings);
         } else if (strcmp((char *)data, "clear") == 0) {
-            current_height = 0; 
+            current_height = 0;
             maxCountsCycle = 0;
-            totalPulseCounts = 0; 
+            totalPulseCounts = 0;
             pumping = false;
         } else if (strcmp((char *)data, "reset") == 0) {
             ESP.restart();
@@ -76,7 +80,7 @@ void handleNumericMessage(String message) {
         } else if (variableName == "k_factor") {
             f_sensor_k_factor_ppg = variableValue;
         } else if (variableName == "sampling_rate") {
-            sampling_rate_f = variableValue;
+            sampling_rate_hz = variableValue;
         } else {
             Serial.println("Unknown variable type");
         }
@@ -86,7 +90,7 @@ void handleNumericMessage(String message) {
     notifyClients(getSensorReadings());
 }
 
-void onEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
     switch (type) {
         case WS_EVT_CONNECT:
             Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());

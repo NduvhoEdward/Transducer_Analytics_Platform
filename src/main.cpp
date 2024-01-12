@@ -1,8 +1,8 @@
-#include "variables.h"
+#include "adc_functions.h"
 #include "gpios.h"
 #include "pump.h"
-#include "sensors.h" 
-#include "adc_functions.h"
+#include "sensors.h"
+#include "variables.h"
 #include "volume_functions.h"
 
 void setup() {
@@ -24,21 +24,24 @@ void setup() {
 
     server.serveStatic("/", SPIFFS, "/");
     server.begin();  // Start server
-}
 
-void loop() {
+    digitalWrite(CIRCUIT_READINESS_LED, HIGH);
+
     digitalWrite(PUMP_OFF_LIGHT_PIN, HIGH);
     digitalWrite(PUMP_ON_LIGHT_PIN, LOW);
     digitalWrite(VALVE_CONTROL_PIN, LOW);
 
-    Serial.println("\n\nValve closed..... (Not pumping) \n\n");
     current_height = 0;
     total_volume_gal = 0;
+    pcnt_counter_clear(PCNT_UNIT_0);
+}
+
+void loop() {
+    Serial.println("\n\nValve closed..... (Not pumping) \n\n");
 
     while (!pumping) {
         NOP();
     }
-    pcnt_counter_clear(PCNT_UNIT_0);
+    
     pump();
 }
-

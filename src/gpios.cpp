@@ -9,7 +9,8 @@ void configureGPIOs() {
 
     pinMode(PUMP_ON_LIGHT_PIN, OUTPUT);
     pinMode(PUMP_OFF_LIGHT_PIN, OUTPUT);
-    pinMode(ONBOARD_LED_PIN, OUTPUT);
+    pinMode(ONBOARD_LED_PIN, OUTPUT); 
+    pinMode(CIRCUIT_READINESS_LED, OUTPUT);
 }
 
 void pulseCounterInit() {

@@ -15,20 +15,22 @@ float current_height = 0;
 const float grav_acc = 9.80665;
 const int bars_to_pa_multiplier = 100000;
 
-const int p_adc_max = 4095;
 float pressure_bars = 0.0;
 
-const float p_shunt_resistor = P_SHUNT_RESISTOR_OHMS;
-const float transmitter_min_cur = PT_MIN_CUR_IN_mA / 1000;
-const float transmitter_max_cur = PT_MAX_CUR_IN_mA / 1000;
-const float p_at_min_cur = P_MIN;
-const float p_at_max_cur = P_MAX;
+float p_shunt_resistor = 100; 
+float pt_min_cur_in_mA = 4; 
+float pt_max_cur_in_mA = 20;
+float transmitter_min_cur = pt_min_cur_in_mA / 1000;
+float transmitter_max_cur = pt_max_cur_in_mA / 1000;
+float p_at_min_cur = 0; // ----------------------------------???????
+float p_at_max_cur = 0.250; // ------------------------------???????
 
-float density = DENSITY;
-float f_sensor_k_factor_ppg = F_SENSOR_K_FACTOR_PPG;
-float tank_max_height = TANK_MAX_HEIGHT;
-float sampling_rate_f = 1 / (static_cast<float>(SAMPLING_RATE_MS) / 1000);
-uint32_t sampling_rate_ms = (1 / (sampling_rate_f)) * 1000;
+float density = 999; // -----------????????????????????
+float f_sensor_k_factor_ppg = 197.77; // -------------???????
+float tank_max_height = 0.735; // --------------??????
+
+float sampling_rate_hz = 2; // 1 / (static_cast<float>(sampling_rate_ms) / 1000);
+uint32_t sampling_rate_ms = static_cast<int>((1 / sampling_rate_hz) * 1000);
 
 const float v_at_min_cur = transmitter_min_cur * p_shunt_resistor;
 const float v_at_max_cur = transmitter_max_cur * p_shunt_resistor;
