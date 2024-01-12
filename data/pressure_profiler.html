@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pressure Precision Profiler Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- <link rel="icon" type="image/png" href="favicon.png" />  -->
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/regression/2.0.1/regression.min.js"
+      integrity="sha512-0k6FXllQktdobw8Nc8KQN2WtZrOuxpMn7jC2RKCF6LR7EdOhhrg3H5cBPxhs3CFzQVlO6ni1B9SDLUPhBs0Alg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <div class="home">
+      <!-- Inspired by https://randomnerdtutorials.com/esp32-websocket-server-sensor/ -->
+      <div class="topnav">
+        <h1>Pressure Precision Profiler</h1>
+      </div>
+      <div class="content">
+        <div class="cards">
+          <div class="mcu-buttons">
+            <div class="top-buttons">
+              <button class="mcu-button" id="start-stop">Start/Stop</button>
+              <button class="mcu-button" id="clear">Clear</button>
+            </div>
+            <button class="mcu-button reset" id="reset">RESET</button>
+          </div>
+
+          <div class="card" ondblclick="openModal('density')">
+            <p class="card-title">Density</p>
+            <p class="reading"><span id="density"></span> kg/m³</p>
+          </div>
+          <div class="card" ondblclick="openModal('max_height')">
+            <p class="card-title">Max Height</p>
+            <p class="reading"><span id="max_height"></span> m</p>
+          </div>
+          <div class="card" ondblclick="openModal('k_factor')">
+            <p class="card-title">K Factor</p>
+            <p class="reading"><span id="k_factor"></span> ppG</p>
+          </div>
+          <div class="card" ondblclick="openModal('sampling_rate')">
+            <p class="card-title">Sampling Rate</p>
+            <p class="reading"><span id="sampling_rate"></span> Hz</p>
+          </div>
+        </div>
+
+        <div id="myModal" class="modal">
+          <span id="modal-close" onclick="closeModal()" style="cursor: pointer"
+            >&times;</span
+          >
+          <p class="modal-input-stuff">
+            <span id="modal-input-title"></span>
+            <input type="number" step="any" id="inputValue" />
+          </p>
+          <button id="modal-send" onclick="sendCardData()">Send</button>
+        </div>
+
+        <div class="chart">
+          <canvas id="realtimeChart" width="100%" height="60%"></canvas>
+          <!-- <canvas id="realtimeChart"></canvas> -->
+        </div>
+
+        <div class="rawData">
+          <table>
+            <thead>
+              <tr>
+                <th>Height</th>
+                <th>Volume</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="equationText"></div>
+
+      <div class="lower-buttons">
+        <button id="fitButton">Fit Curve</button>
+        <button id="exportButton">Export as CSV</button>
+      </div>
+
+      <footer>iMining</footer>
+    </div>
+  </body>
+</html>
