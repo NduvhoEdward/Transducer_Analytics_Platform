@@ -11,6 +11,7 @@ const float p_adc_vref = 3.3;
 float p_adc_voltage = 0;
 float adc_v_slope = 0;
 float adc_volts_yIntercept = 0;
+float zero_height = 0; 
 float current_height = 0.0;
 const float grav_acc = 9.80665;
 const int bars_to_pa_multiplier = 100;

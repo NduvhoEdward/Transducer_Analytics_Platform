@@ -46,6 +46,12 @@
             <p class="card-title">Sampling Rate</p>
             <p class="reading"><span id="sampling_rate"></span> Hz</p>
           </div>
+
+          <div class="card calib">
+            <p>Current Height: <span id="current_height"></span> </p>
+            <button id="zero">Zero/Calib</button>
+            <p> Zero Height: <span id="zero_height"></span></p> 
+          </div>
         </div>
 
         <div id="myModal" class="modal">
@@ -68,8 +74,8 @@
           <table>
             <thead>
               <tr>
-                <th>Height</th>
-                <th>Volume</th>
+                <th>Height (mm)</th>
+                <th>Volume (gal)</th>
               </tr>
             </thead>
             <tbody id="dataTableBody"></tbody>

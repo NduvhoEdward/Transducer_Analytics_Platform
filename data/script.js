@@ -3,7 +3,9 @@
 
 
 // Section 1.2.1 -- Cards >> MCU Buttons 
+let startedRecording = false;
 document.getElementById("start-stop").addEventListener("click", function () {
+  startedRecording = !startedRecording; 
   sendMessage("start_stop");
 });
 document.getElementById("clear").addEventListener("click", function () {
@@ -15,6 +17,9 @@ document.getElementById("reset").addEventListener("click", function() {
   clearTable(); 
   clearGraph(myChart); 
   sendMessage('reset');
+});
+document.getElementById("zero").addEventListener("click", function() {
+  sendMessage('zero');
 });
 function sendMessage(message) {
   if (websocket.readyState === WebSocket.OPEN) {
@@ -256,11 +261,12 @@ function onMessage(event) {
     document.getElementById(key).innerHTML = data_from_mcu[key];
   }
 
-  // Plotting stuff
-  data.labels.push(data_from_mcu.height);
-  data.datasets[0].data.push(data_from_mcu.volume);
-  myChart.update();
-  updateTable();
+  if (startedRecording) {
+    data.labels.push(data_from_mcu.height);
+    data.datasets[0].data.push(data_from_mcu.volume);
+    myChart.update();
+    updateTable();
+  }
 }
 
 

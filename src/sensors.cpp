@@ -4,15 +4,17 @@
 #include "variables.h"
 
 String floatToString(float value, int width, int precision) {
-    char buffer[10];  
+    char buffer[10];
     dtostrf(value, width, precision, buffer);
     return buffer;
 }
 String getSensorReadings() {
-    readings["height"] = floatToString(current_height, 7, 3); 
+    readings["height"] = floatToString(current_height, 7, 3);
     readings["volume"] = floatToString(total_volume_gal, 7, 3);
     readings["density"] = floatToString(density, 6, 2);
     readings["k_factor"] = floatToString(f_sensor_k_factor_ppg, 6, 2);
+    readings["current_height"] = floatToString(current_height, 7, 3);
+    readings["zero_height"] = floatToString(zero_height, 7, 3);
     readings["max_height"] = floatToString(tank_max_height, 7, 3);
     readings["sampling_rate"] = floatToString(sampling_rate_hz, 5, 2);
 
@@ -65,6 +67,8 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
             ESP.restart();
         } else if (strcmp((char *)data, "start_stop") == 0) {
             start_stop_pumping();
+        } else if (strcmp((char *)data, "zero") == 0) {
+            zero_height = current_height;
         } else {
             handleNumericMessage(message);
         }

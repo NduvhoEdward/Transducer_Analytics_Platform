@@ -40,8 +40,16 @@ void loop() {
     Serial.println("\n\nValve closed..... (Not pumping) \n\n");
 
     while (!pumping) {
-        NOP();
+        p_adc_value = get_p_adc_value();
+        p_adc_voltage = p_adc_to_volts();
+        pressure_mbars = get_p_from_v();
+        current_height = (pressure_mbars * bars_to_pa_multiplier) * m_to_mm_multiplier / (density * grav_acc);
+        current_height -= zero_height; 
+
+        String sensorReadings = getSensorReadings();
+        notifyClients(sensorReadings);
+        delay(3000);
     }
-    
+
     pump();
 }

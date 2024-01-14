@@ -38,8 +38,8 @@ void pump() {
         p_adc_voltage = p_adc_to_volts();
         pressure_mbars = get_p_from_v();
 
-        current_height = (pressure_mbars * bars_to_pa_multiplier) / (density * grav_acc);
-        current_height *= m_to_mm_multiplier; 
+        current_height = (pressure_mbars * bars_to_pa_multiplier) * m_to_mm_multiplier / (density * grav_acc);
+        current_height -= zero_height; 
 
         totalPulseCounts = getTotalPulses();
         total_volume_gal = getCurrentVolume();

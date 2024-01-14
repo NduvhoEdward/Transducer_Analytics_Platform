@@ -106,6 +106,12 @@ button {
 .reading {
   font-size: 1.0rem;
   color: var(--secondary-orange);
+} 
+.calib {
+  border: 0.25rem solid var(--primary-orange);
+}
+.calib > button {
+  border-color: var(--primary-orange);;
 }
 
 

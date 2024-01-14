@@ -21,6 +21,7 @@ extern const float p_adc_vref;
 extern float p_adc_voltage;
 extern float adc_v_slope;
 extern float adc_volts_yIntercept;
+extern float zero_height; 
 extern float current_height;
 extern const float grav_acc;
 extern const int bars_to_pa_multiplier;
