@@ -3,13 +3,18 @@
 #include "pump.h"
 #include "variables.h"
 
+String floatToString(float value, int width, int precision) {
+    char buffer[10];  
+    dtostrf(value, width, precision, buffer);
+    return buffer;
+}
 String getSensorReadings() {
-    readings["height"] = String(current_height);
-    readings["volume"] = String(total_volume_gal);
-    readings["density"] = String(density);
-    readings["k_factor"] = String(f_sensor_k_factor_ppg);
-    readings["max_height"] = String(tank_max_height);
-    readings["sampling_rate"] = String(sampling_rate_hz);
+    readings["height"] = floatToString(current_height, 7, 3); 
+    readings["volume"] = floatToString(total_volume_gal, 7, 3);
+    readings["density"] = floatToString(density, 6, 2);
+    readings["k_factor"] = floatToString(f_sensor_k_factor_ppg, 6, 2);
+    readings["max_height"] = floatToString(tank_max_height, 7, 3);
+    readings["sampling_rate"] = floatToString(sampling_rate_hz, 5, 2);
 
     String jsonString = JSON.stringify(readings);
     return jsonString;

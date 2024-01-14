@@ -24,9 +24,10 @@ extern float adc_volts_yIntercept;
 extern float current_height;
 extern const float grav_acc;
 extern const int bars_to_pa_multiplier;
+extern const int m_to_mm_multiplier;
 
 extern const int p_adc_max;
-extern float pressure_bars;
+extern float pressure_mbars;
 
 extern float p_shunt_resistor;
 extern float pt_min_cur_in_mA; 
@@ -42,11 +43,11 @@ extern float tank_max_height;
 extern float sampling_rate_hz;
 extern uint32_t sampling_rate_ms;
 
-extern const float v_at_min_cur;
-extern const float v_at_max_cur;
+extern float v_at_min_cur;
+extern float v_at_max_cur;
 
-extern const float vp_slope;
-extern const float yIntercept;
+extern float vp_slope;
+extern float yIntercept;
 
 extern unsigned long lastDebounceTime;
 extern unsigned long debounceDelay;

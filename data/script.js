@@ -245,6 +245,8 @@ function onMessage(event) {
   var data_from_mcu = JSON.parse(event.data);
   var keys = Object.keys(data_from_mcu);
 
+  console.log(data_from_mcu);
+  
   for (var i = 0; i < keys.length; i++) {
     var key = keys[i];
 

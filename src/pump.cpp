@@ -27,7 +27,7 @@ void pump() {
     digitalWrite(PUMP_ON_LIGHT_PIN, HIGH);
 
     // Print headers
-    Serial.println("ADC Value(dec)\tADC Voltage(V)\tPressure(mBars)\tHeight(m)\tPulse Counter Value\tTotal Volume(gal)");
+    Serial.println("ADC Voltage(mV)\tPressure(mBars)\tHeight(mm)\tPulse Counter Value\tTotal Volume(gal)");
 
     while (current_height < 0.95 * tank_max_height && pumping == true) {
         // while (pumping == true) {
@@ -36,24 +36,25 @@ void pump() {
         }
         p_adc_value = get_p_adc_value();
         p_adc_voltage = p_adc_to_volts();
-        pressure_bars = get_p_from_v();
-        current_height = (pressure_bars * bars_to_pa_multiplier) / (density * grav_acc);
+        pressure_mbars = get_p_from_v();
+
+        current_height = (pressure_mbars * bars_to_pa_multiplier) / (density * grav_acc);
+        current_height *= m_to_mm_multiplier; 
 
         totalPulseCounts = getTotalPulses();
         total_volume_gal = getCurrentVolume();
 
         // Data
-        Serial.print(p_adc_value);
+        Serial.print(p_adc_voltage*1000, 3);
         Serial.print("\t\t");
-        Serial.print(p_adc_voltage);
+        Serial.print(pressure_mbars, 3);
         Serial.print("\t\t");
-        Serial.print(pressure_bars * 1000);
-        Serial.print("\t\t");
-        Serial.print(current_height);
+        Serial.print(current_height, 3);
         Serial.print("\t\t");
         Serial.print(static_cast<int>(totalPulseCounts));
         Serial.print("\t\t");
-        Serial.println(total_volume_gal);
+        Serial.print(total_volume_gal, 3);
+        Serial.print("\n");
 
         String sensorReadings = getSensorReadings();
         notifyClients(sensorReadings);
@@ -64,6 +65,6 @@ void pump() {
     digitalWrite(VALVE_CONTROL_PIN, LOW);
     digitalWrite(PUMP_OFF_LIGHT_PIN, HIGH);
     digitalWrite(PUMP_ON_LIGHT_PIN, LOW);
-    
+
     pumping = false;
 }
