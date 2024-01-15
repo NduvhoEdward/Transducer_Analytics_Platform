@@ -7,6 +7,7 @@ relevant html sections being styled or js manipulated */
   --secondary-orange: #ffb964;
   --tertiary-orange: #ffdca0;
   --primary-navy: #002841; 
+  --dark-bg1: #928e8e;
 }
 
 /* Section 0 */
@@ -29,7 +30,7 @@ html {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background-color: #928e8e; /* var(--tertiary-orange); */
+  background-color: var(--dark-bg1); 
   color: var(--tertiary-orange);
 }
 

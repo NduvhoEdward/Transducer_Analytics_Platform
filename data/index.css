@@ -3,7 +3,7 @@
   --secondary-orange: #ffb964;
   --tertiary-orange: #ffdca0;
   --primary-navy: #002841; 
-
+  --dark-bg1: #928e8e;
 }
 
 /* Section 0 */
@@ -64,7 +64,6 @@ main {
 a {
   text-decoration: none;
   color: #333;
-  font-weight: bold;
 }
 
 footer {
