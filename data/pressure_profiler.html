@@ -30,6 +30,12 @@
             <button class="mcu-button reset" id="reset">RESET</button>
           </div>
 
+          <div class="card calib">
+            <p>Current Height: <span id="current_height"></span> </p>
+            <button id="zero">Zero/Calib</button>
+            <p> Zero Height: <span id="zero_height"></span></p> 
+          </div>
+
           <div class="card" ondblclick="openModal('density')" title="Double click to change value">
             <p class="card-title">Density</p>
             <p class="reading"><span id="density"></span> kg/m³</p>
@@ -45,12 +51,6 @@
           <div class="card" ondblclick="openModal('sampling_rate')" title="Double click to change value">
             <p class="card-title">Sampling Rate</p>
             <p class="reading"><span id="sampling_rate"></span> Hz</p>
-          </div>
-
-          <div class="card calib">
-            <p>Current Height: <span id="current_height"></span> </p>
-            <button id="zero">Zero/Calib</button>
-            <p> Zero Height: <span id="zero_height"></span></p> 
           </div>
         </div>
 

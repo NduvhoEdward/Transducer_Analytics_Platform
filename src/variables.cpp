@@ -43,10 +43,9 @@ float yIntercept = p_at_min_cur - vp_slope * v_at_min_cur;
 unsigned long lastDebounceTime = 0;
 unsigned long debounceDelay = 1000;
 
-// const char *ssid = "IMINING HO";
-// const char *password = "1Min!Ng010";
-const char *ssid = "OPPO_6B717F_2.4G";
-const char *password = "Mbofho#23971*";
+const char *ssid = "IMINING HO";
+const char *password = "1Min!Ng010";
+
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 

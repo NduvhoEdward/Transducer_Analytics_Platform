@@ -1,7 +1,7 @@
 #include "sensors.h"
-
 #include "pump.h"
 #include "variables.h"
+#include <ESPmDNS.h>
 
 String floatToString(float value, int width, int precision) {
     char buffer[10];
@@ -43,6 +43,15 @@ void initWiFi() {
         delay(100);
     }
     Serial.println(WiFi.localIP());
+
+    // Set up mDNS with the hostname "esp32"
+    if (!MDNS.begin("esp32")) {
+        Serial.println("Error setting up mDNS");
+        while (1) {
+            delay(1000);
+        }
+    }
+    Serial.println("mDNS responder started");
 }
 
 void notifyClients(String sensorReadings) {
