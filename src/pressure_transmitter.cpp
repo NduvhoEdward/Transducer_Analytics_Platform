@@ -1,12 +1,6 @@
-// variables.cpp
-#include "variables.h"
+#include "pressure_transmitter.h"
 
 uint16_t p_adc_value = 0;
-uint32_t totalPulseCounts = 0;
-int16_t pulseCount = 0;
-volatile int maxCountsCycle = 0;
-volatile bool pumping = false;
-
 const float p_adc_vref = 3.3;
 float p_adc_voltage = 0;
 float adc_v_slope = 0;
@@ -28,11 +22,7 @@ float p_at_min_cur = 0; // ----------------------------------???????
 float p_at_max_cur = 250; // ------------------------------???????
 
 float density = 999; // -----------????????????????????
-float f_sensor_k_factor_ppg = 197.77; // -------------???????
 float tank_max_height = 735; // --------------??????
-
-float sampling_rate_hz = 2; 
-uint32_t sampling_rate_ms = static_cast<uint32_t>((1 / sampling_rate_hz) * 1000);
 
 float v_at_min_cur = transmitter_min_cur * p_shunt_resistor;
 float v_at_max_cur = transmitter_max_cur * p_shunt_resistor;
@@ -40,17 +30,31 @@ float v_at_max_cur = transmitter_max_cur * p_shunt_resistor;
 float vp_slope = (p_at_max_cur - p_at_min_cur) / (v_at_max_cur - v_at_min_cur);
 float yIntercept = p_at_min_cur - vp_slope * v_at_min_cur;
 
-unsigned long lastDebounceTime = 0;
-unsigned long debounceDelay = 1000;
 
-const char *ssid = "IMINING HO";
-const char *password = "1Min!Ng010";
+void adcInit() {
+    adc1_config_width(ADC_WIDTH_BIT_12);
+    adc1_config_channel_atten(ADC1_CHANNEL_6, ADC_ATTEN_DB_11);
+    adc_set_data_inv(ADC_UNIT_1, true | false);
+} 
 
-AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
+uint16_t get_p_adc_value() {
+    return adc1_get_raw(ADC1_CHANNEL_6);
+}
 
-JSONVar readings;
-unsigned long lastTime = 0;
-unsigned long timerDelay = 3000;
+void calib_adc_and_v() {
+    int adc_value_1 = 337;
+    int adc_value_2 = 2288;
+    float measure_v_1 = 0.400;
+    float measure_v_2 = 2.008;
 
-float total_volume_gal = 0.0;
+    adc_v_slope = (measure_v_2 - measure_v_1) / (adc_value_2 - adc_value_1);
+    adc_volts_yIntercept = measure_v_1 - adc_v_slope * adc_value_1;
+}
+
+float p_adc_to_volts() {
+    return (adc_v_slope * p_adc_value + adc_volts_yIntercept);
+}
+
+float get_p_from_v() {
+    return (vp_slope * p_adc_voltage + yIntercept);
+}

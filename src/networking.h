@@ -1,7 +1,18 @@
-// Declarations for functions and logic related to sensor readings. 
 #pragma once
 #include <Arduino.h>
+#include <Arduino_JSON.h>
+#include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include "SPIFFS.h"
+#include <WiFi.h>
+#include <ESPmDNS.h>
+
+extern const char *ssid;
+extern const char *password;
+extern AsyncWebServer server;
+extern AsyncWebSocket ws;
+
+extern JSONVar readings;
 
 String getSensorReadings();
 void initSPIFFS();

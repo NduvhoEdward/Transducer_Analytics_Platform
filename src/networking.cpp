@@ -1,7 +1,18 @@
-#include "sensors.h"
-#include "pump.h"
-#include "variables.h"
-#include <ESPmDNS.h>
+#include "networking.h"
+
+
+#include "control.h" 
+#include "pressure_transmitter.h" 
+#include "flow_sensor.h" 
+#include "gpios.h" 
+
+const char *ssid = "IMINING HO"; 
+const char *password = "1Min!Ng010"; 
+
+AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
+
+JSONVar readings;
 
 String floatToString(float value, int width, int precision) {
     char buffer[10];

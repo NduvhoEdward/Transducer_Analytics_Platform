@@ -1,9 +1,9 @@
-#include "adc_functions.h"
-#include "gpios.h"
-#include "pump.h"
-#include "sensors.h"
-#include "variables.h"
-#include "volume_functions.h"
+#include "control.h"
+#include "networking.h" 
+#include "gpios.h" 
+
+#include "pressure_transmitter.h" 
+#include "flow_sensor.h" 
 
 void setup() {
     Serial.begin(115200);

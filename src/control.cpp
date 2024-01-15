@@ -1,9 +1,16 @@
-#include "pump.h"
+#include "control.h" 
+#include "networking.h" 
+#include "pressure_transmitter.h" 
+#include "flow_sensor.h" 
+#include "gpios.h" 
 
-#include "adc_functions.h"
-#include "sensors.h"
-#include "variables.h"
-#include "volume_functions.h"
+
+volatile bool pumping = false;
+float sampling_rate_hz = 2; 
+uint32_t sampling_rate_ms = static_cast<uint32_t>((1 / sampling_rate_hz) * 1000);
+
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 1000;
 
 void IRAM_ATTR start_stop_pumping() {
     unsigned long currentMillis = millis();
