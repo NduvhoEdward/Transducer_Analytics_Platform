@@ -2,16 +2,19 @@
 #include "networking.h" 
 #include "gpios.h" 
 
+#include "Transmitter.h" 
 #include "pressure_transmitter.h" 
+#include "distance_transmitter.h" 
+
 #include "flow_sensor.h" 
 
 void setup() {
     Serial.begin(115200);
     configureGPIOs();
-    adcInit();
-    calib_adc_and_v();
-    pulseCounterInit();
+    configure_p_transmitter(); 
+    configure_dis_transmitter(); 
 
+    pulseCounterInit();
     attachInterrupt(START_PUMP_BUTTON, start_stop_pumping, HIGH);
 
     initWiFi();
@@ -37,18 +40,16 @@ void setup() {
 }
 
 void loop() {
-    Serial.println("\n\nValve closed..... (Not pumping) \n\n");
+    Serial.println("\n\nValve closed.....  \n\n");
 
     while (!pumping) {
-        p_adc_value = get_p_adc_value();
-        p_adc_voltage = p_adc_to_volts();
-        pressure_mbars = get_p_from_v();
+        pressure_mbars = pressure_transmitter.get_quantity();
         current_height = (pressure_mbars * bars_to_pa_multiplier) * m_to_mm_multiplier / (density * grav_acc);
         current_height -= zero_height; 
 
         String sensorReadings = getSensorReadings();
         notifyClients(sensorReadings);
-        delay(3000);
+        delay(2000);
     }
 
     pump();

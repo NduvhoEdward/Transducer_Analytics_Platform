@@ -3,9 +3,9 @@
 
 
 // Section 1.2.1 -- Cards >> MCU Buttons 
-let startedRecording = false;
+let recording = false;
 document.getElementById("start-stop").addEventListener("click", function () {
-  startedRecording = !startedRecording; 
+  recording = !recording; 
   sendMessage("start_stop");
 });
 document.getElementById("clear").addEventListener("click", function () {
@@ -261,7 +261,7 @@ function onMessage(event) {
     document.getElementById(key).innerHTML = data_from_mcu[key];
   }
 
-  if (startedRecording) {
+  if (recording) {
     data.labels.push(data_from_mcu.height);
     data.datasets[0].data.push(data_from_mcu.volume);
     myChart.update();

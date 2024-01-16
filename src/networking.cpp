@@ -56,7 +56,7 @@ void initWiFi() {
     Serial.println(WiFi.localIP());
 
     // Set up mDNS with the hostname "esp32"
-    if (!MDNS.begin("transducer-analytics")) {
+    if (!MDNS.begin("esp32analytics")) {
         Serial.println("Error setting up mDNS");
         while (1) {
             delay(1000);
