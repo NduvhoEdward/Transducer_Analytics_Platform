@@ -12,7 +12,8 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     ></script>
-    <script src="pressure_profiler.js" defer></script>
+    <script type="module" src="/WebSocketModule.js"></script>
+    <script type="module" src="/pressure_profiler.js" defer></script>
   </head>
   <body>
     <div class="home">
@@ -31,24 +32,40 @@
           </div>
 
           <div class="card calib">
-            <p>Current Height: <span id="current_height"></span> </p>
+            <p>Current Height: <span id="current_height"></span></p>
             <button id="zero">Zero/Calib</button>
-            <p> Zero Height: <span id="zero_height"></span></p> 
+            <p>Zero Height: <span id="zero_height"></span></p>
           </div>
 
-          <div class="card" ondblclick="openModal('density')" title="Double click to change value">
+          <div
+            class="card"
+            ondblclick="openModal('density')"
+            title="Double click to change value"
+          >
             <p class="card-title">Density</p>
             <p class="reading"><span id="density"></span> kg/m³</p>
           </div>
-          <div class="card" ondblclick="openModal('max_height')" title="Double click to change value">
+          <div
+            class="card"
+            ondblclick="openModal('max_height')"
+            title="Double click to change value"
+          >
             <p class="card-title">Max Height</p>
             <p class="reading"><span id="max_height"></span> mm</p>
           </div>
-          <div class="card" ondblclick="openModal('k_factor')" title="Double click to change value">
+          <div
+            class="card"
+            ondblclick="openModal('k_factor')"
+            title="Double click to change value"
+          >
             <p class="card-title">K Factor</p>
             <p class="reading"><span id="k_factor"></span> ppG</p>
           </div>
-          <div class="card" ondblclick="openModal('sampling_rate')" title="Double click to change value">
+          <div
+            class="card"
+            ondblclick="openModal('sampling_rate')"
+            title="Double click to change value"
+          >
             <p class="card-title">Sampling Rate</p>
             <p class="reading"><span id="sampling_rate"></span> Hz</p>
           </div>
