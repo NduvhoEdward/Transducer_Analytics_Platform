@@ -2,7 +2,7 @@
 // section hierarchy from the index.html file.
 
 // Section 1.2.1 -- Cards >> MCU Buttons
-let recording = false;
+let recording = true;
 let websocket = null; // = WebSocketModule.getWebSocket();
 
 document.getElementById("start-stop").addEventListener("click", function () {
@@ -226,32 +226,44 @@ exportButton.addEventListener("click", downloadCSV);
 //
 // Section Z -- Mainly for the MCU stuff
 import WebSocketModule from "/WebSocketModule.js";
+import WebSocketSimulator from "./WebSocketSimulator.js";
+
 window.addEventListener("load", function () {
   WebSocketModule.initWebSocket();
   websocket = WebSocketModule.getWebSocket();
 
-  // Subscribe to WebSocket events
+  // Subscribe to real WebSocket events
   WebSocketModule.subscribe(function (data_from_mcu) {
     console.log(data_from_mcu);
-
-    //
-    var keys = Object.keys(data_from_mcu);
-    for (var i = 0; i < keys.length; i++) {
-      var key = keys[i];
-
-      if (key === "height" || key === "volume") {
-        continue;
-      }
-      document.getElementById(key).innerHTML = data_from_mcu[key];
-    }
-
-    if (recording) {
-      data.labels.push(data_from_mcu.height);
-      data.datasets[0].data.push(data_from_mcu.volume);
-      myChart.update();
-      updateTable();
-    }
+    handle_pressure_data(data_from_mcu);
   });
+
+  // Initialize WebSocket simulator module
+  WebSocketSimulator.useSimulatedWebSocket();
+  WebSocketSimulator.subscribe((data) => {
+    console.log("Simulated WebSocket Data Received:", data);
+    // distance.textContent = data_from_mcu.height;
+    handle_pressure_data(data);
+  });
+  // WebSocketSimulator.useRealWebSocket();
+  WebSocketSimulator.useSimulatedWebSocket();
 });
 
-function handle_pressure_data() {}
+function handle_pressure_data(data_from_mcu) {
+  var keys = Object.keys(data_from_mcu);
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+
+    if (key === "height" || key === "volume" || "time") {
+      continue;
+    }
+    document.getElementById(key).innerHTML = data_from_mcu[key];
+  }
+
+  if (recording) {
+    data.labels.push(data_from_mcu.height);
+    data.datasets[0].data.push(data_from_mcu.volume);
+    myChart.update();
+    updateTable();
+  }
+}
