@@ -21,7 +21,7 @@ window.addEventListener("load", function () {
     console.log("Simulated WebSocket Data Received:", data);
     distance.textContent = data.height;
     // handle_distance_data(data);
-    add_data(data.density, data.volume, data.time);
+    add_data(data.density, data.volume, data.test_time);
   });
 
   // WebSocketSimulator.useRealWebSocket();
@@ -36,13 +36,13 @@ var canvas = document.getElementById("time-chart");
 var data = {
   datasets: [
     {
-      label: "current1",
+      label: "current1_mA",
       borderColor: "rgb(237, 18, 237)",
       fill: false,
       borderWidth: 3,
     },
     {
-      label: "current2",
+      label: "current2_mA",
       borderColor: "rgb(0, 115, 255)",
       fill: false,
       borderWidth: 3,
@@ -57,21 +57,18 @@ var options = {
       },
     ],
 
-    xAxes: [
-      {
-        type: "time",
-        ticks: {
-          maxTicksLimit: 5,
-        },
-        time: {
-          unit: "second",
-          displayFormats: {
-            second: "HH:mm:ss",
-          },
-          tooltipFormat: "HH:mm:ss",
-        },
+    y: {
+      type: "linear",
+    },
+
+    x: {
+      type: "linear",
+      position: "bottom",
+      scaleLabel: {
+        display: true,
+        labelString: "Height",
       },
-    ],
+    },
   },
   showLines: true,
 };
@@ -80,7 +77,7 @@ var time_chart = new Chart.Line(canvas, {
   options: options,
 });
 
-function add_data(current1 = NaN, current2 = NaN, label = moment()) {
+function add_data(current1 = NaN, current2 = NaN, test_time = NaN) {
   var datasets = time_chart.data.datasets;
   var labels = time_chart.data.labels;
   var current1DataSet = datasets[0].data;
@@ -96,7 +93,6 @@ function add_data(current1 = NaN, current2 = NaN, label = moment()) {
     current1DataSet.shift();
     didRemoveData = true;
   }
-
   if (current2DataLength > MAX_DATA_SET_LENGTH) {
     current2DataSet.shift();
     didRemoveData = true;
@@ -108,10 +104,8 @@ function add_data(current1 = NaN, current2 = NaN, label = moment()) {
     labels.shift();
   }
 
-  labels.push(label);
+  labels.push(test_time);
   current1DataSet.push(current1);
   current2DataSet.push(current2);
   time_chart.update();
 }
-
-// setInterval(reLoad, 1000);
