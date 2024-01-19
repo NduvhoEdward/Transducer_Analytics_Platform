@@ -84,23 +84,10 @@ function add_data(current1 = NaN, current2 = NaN, test_time = NaN) {
   var current2DataSet = datasets[1].data;
 
   var current1DataLength = current1DataSet.length;
-  var current2DataLength = current2DataSet.length;
 
-  // if upload/download's data set has more than MAX_DATA_SET_LENGTH entries,
-  // remove the first one entry and push on a new data entry
-  var didRemoveData = false;
   if (current1DataLength > MAX_DATA_SET_LENGTH) {
     current1DataSet.shift();
-    didRemoveData = true;
-  }
-  if (current2DataLength > MAX_DATA_SET_LENGTH) {
     current2DataSet.shift();
-    didRemoveData = true;
-  }
-
-  // if either download or upload data was removed, we also need to remove
-  // the first label to keep the data from squeezing in.
-  if (didRemoveData) {
     labels.shift();
   }
 
