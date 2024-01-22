@@ -23,17 +23,49 @@ const WebSocketSimulator = {
   simulateData: function () {
     if (this.useSimulation) {
       setInterval(() => {
-        this.currentTime += 1;
         const simulatedData = {
           height: this.currentTime,
-          volume: Math.sin(this.currentTime),
-          density: getRandomFloat(0, 5, 2),
+          volume: [
+            Math.sin(this.currentTime),
+            Math.sin(++this.currentTime),
+            Math.sin(++this.currentTime),
+            Math.sin(++this.currentTime),
+            Math.sin(++this.currentTime),
+            Math.sin(++this.currentTime),
+            Math.sin(++this.currentTime),
+            Math.sin(++this.currentTime),
+            Math.sin(++this.currentTime),
+            Math.sin(++this.currentTime),
+          ],
+          density: [
+            getRandomFloat(0, 5, 2),
+            getRandomFloat(0, 5, 2),
+            getRandomFloat(0, 5, 2),
+            getRandomFloat(0, 5, 2),
+            getRandomFloat(0, 5, 2),
+            getRandomFloat(0, 5, 2),
+            getRandomFloat(0, 5, 2),
+            getRandomFloat(0, 5, 2),
+            getRandomFloat(0, 5, 2),
+            getRandomFloat(0, 5, 2),
+          ],
           k_factor: getRandomFloat(0, 10, 2),
           current_height: getRandomFloat(0, 10, 3),
           zero_height: getRandomFloat(0, 10, 3),
           max_height: getRandomFloat(0, 20, 3),
           sampling_rate: getRandomFloat(1, 10, 2),
-          test_time: this.currentTime,
+          test_time: [
+            this.currentTime,
+            ++this.currentTime,
+            ++this.currentTime,
+            ++this.currentTime,
+            ++this.currentTime,
+            ++this.currentTime,
+            ++this.currentTime,
+            ++this.currentTime,
+            ++this.currentTime,
+            ++this.currentTime,
+          ],
         };
 
         this.notifySubscribers(simulatedData);

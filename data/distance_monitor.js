@@ -30,7 +30,7 @@ window.addEventListener("load", function () {
 
 //
 
-var MAX_DATA_SET_LENGTH = 15;
+var MAX_DATA_SET_LENGTH = 25;
 
 var canvas = document.getElementById("time-chart");
 var data = {
@@ -50,6 +50,7 @@ var data = {
   ],
 };
 var options = {
+  animation: false,
   scales: {
     yAxes: [
       {
@@ -77,7 +78,7 @@ var time_chart = new Chart.Line(canvas, {
   options: options,
 });
 
-function add_data(current1 = NaN, current2 = NaN, test_time = NaN) {
+function add_data(current1 = [], current2 = [], test_time = []) {
   var datasets = time_chart.data.datasets;
   var labels = time_chart.data.labels;
   var current1DataSet = datasets[0].data;
@@ -86,13 +87,14 @@ function add_data(current1 = NaN, current2 = NaN, test_time = NaN) {
   var current1DataLength = current1DataSet.length;
 
   if (current1DataLength > MAX_DATA_SET_LENGTH) {
-    current1DataSet.shift();
-    current2DataSet.shift();
-    labels.shift();
+    current1DataSet.splice(0, current1.length);
+    current2DataSet.splice(0, current2.length);
+    labels.splice(0, test_time.length);
   }
 
-  labels.push(test_time);
-  current1DataSet.push(current1);
-  current2DataSet.push(current2);
+  Array.prototype.push.apply(labels, test_time);
+  Array.prototype.push.apply(current1DataSet, current1);
+  Array.prototype.push.apply(current2DataSet, current2);
+
   time_chart.update();
 }
