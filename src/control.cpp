@@ -7,12 +7,12 @@
 #include "networking.h"
 #include "pressure_transmitter.h"
 
-volatile bool pumping = false;
-float sampling_rate_hz = 2;
+volatile bool pumping = true;
+float sampling_rate_hz = 1;
 uint32_t sampling_rate_ms = static_cast<uint32_t>((1 / sampling_rate_hz) * 1000);
 
 unsigned long lastDebounceTime = 0;
-unsigned long debounceDelay = 1000;
+unsigned long debounceDelay = 1;
 
 void IRAM_ATTR start_stop_pumping() {
     unsigned long currentMillis = millis();
@@ -27,6 +27,9 @@ void IRAM_ATTR start_stop_pumping() {
         }
     }
 }
+
+const int BUFFER_SIZE = 10;
+char buffer[BUFFER_SIZE];
 
 void pump() {
     // configure_p_transmitter();
@@ -73,7 +76,8 @@ void pump() {
         Serial.print("\n");
 
         String sensorReadings = getSensorReadings();
-        notifyClients(sensorReadings);
+        // notifyClients(sensorReadings);
+        buffer_handling(sensorReadings);
 
         delay(sampling_rate_ms);
     }

@@ -239,14 +239,14 @@ window.addEventListener("load", function () {
   });
 
   // Initialize WebSocket simulator module
-  WebSocketSimulator.useSimulatedWebSocket();
-  WebSocketSimulator.subscribe((data) => {
-    console.log("Simulated WebSocket Data Received:", data);
-    // distance.textContent = data_from_mcu.height;
-    handle_pressure_data(data);
-  });
+  // WebSocketSimulator.useSimulatedWebSocket();
+  // WebSocketSimulator.subscribe((data) => {
+  //   console.log("Simulated WebSocket Data Received:", data);
+  //   // distance.textContent = data_from_mcu.height;
+  //   handle_pressure_data(data);
+  // });
   // WebSocketSimulator.useRealWebSocket();
-  WebSocketSimulator.useSimulatedWebSocket();
+  // WebSocketSimulator.useSimulatedWebSocket();
 });
 
 function handle_pressure_data(data_from_mcu) {

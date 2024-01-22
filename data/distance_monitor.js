@@ -12,20 +12,20 @@ window.addEventListener("load", function () {
   // Subscribe to real WebSocket events
   WebSocketModule.subscribe(function (data_from_mcu) {
     console.log(data_from_mcu);
-    distance.textContent = data_from_mcu.height;
+    // distance.textContent = data_from_mcu.height;
   });
 
   // Initialize WebSocket simulator module
-  WebSocketSimulator.useSimulatedWebSocket();
-  WebSocketSimulator.subscribe((data) => {
-    console.log("Simulated WebSocket Data Received:", data);
-    distance.textContent = data.height;
-    // handle_distance_data(data);
-    add_data(data.density, data.volume, data.test_time);
-  });
+  // WebSocketSimulator.useSimulatedWebSocket();
+  // WebSocketSimulator.subscribe((data) => {
+  //   console.log("Simulated WebSocket Data Received:", data);
+  //   distance.textContent = data.height;
+  //   // handle_distance_data(data);
+  //   add_data(data.density, data.volume, data.test_time);
+  // });
 
   // WebSocketSimulator.useRealWebSocket();
-  WebSocketSimulator.useSimulatedWebSocket();
+  // WebSocketSimulator.useSimulatedWebSocket();
 });
 
 //

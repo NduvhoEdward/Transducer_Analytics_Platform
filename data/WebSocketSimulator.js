@@ -1,6 +1,6 @@
 const WebSocketSimulator = {
   subscribers: [],
-  useSimulation: true,
+  // useSimulation: true,
   currentTime: 500,
 
   useRealWebSocket: function () {

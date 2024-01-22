@@ -1,5 +1,7 @@
 #include "networking.h"
 
+#include <ArduinoJson.h>
+
 #include "control.h"
 #include "flow_sensor.h"
 #include "gpios.h"
@@ -11,7 +13,9 @@ const char *password = "1Min!Ng010";
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-JSONVar readings;
+#define MAX_JSON_SIZE 1024
+JsonDocument readings;
+JsonDocument batch_readings;
 
 String floatToString(float value, int width, int precision) {
     char buffer[10];
@@ -28,8 +32,27 @@ String getSensorReadings() {
     readings["max_height"] = floatToString(tank_max_height, 7, 3);
     readings["sampling_rate"] = floatToString(sampling_rate_hz, 5, 2);
 
-    String jsonString = JSON.stringify(readings);
+    String jsonString;
+    serializeJson(readings, jsonString);
+
+    Serial.println("====== AS String  =====");
+    Serial.println(jsonString);
+
     return jsonString;
+}
+
+void buffer_handling(String sensor_readings) {
+    batch_readings.add(sensor_readings);
+    if (measureJson(batch_readings) >= MAX_JSON_SIZE) {
+        String jsonString;
+        serializeJson(batch_readings, jsonString);
+        notifyClients(jsonString);
+
+        Serial.println("====== AS SENT  =====");
+        Serial.println(jsonString);
+
+        batch_readings.clear();
+    }
 }
 
 void initSPIFFS() {
