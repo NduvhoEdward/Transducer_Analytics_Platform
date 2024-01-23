@@ -16,7 +16,6 @@ unsigned long debounceDelay = 1000;
 
 void IRAM_ATTR start_stop_pumping() {
     unsigned long currentMillis = millis();
-    // Check if enough time has passed since the last interrupt
     if (currentMillis - lastDebounceTime >= debounceDelay) {
         lastDebounceTime = currentMillis;
 
@@ -27,9 +26,6 @@ void IRAM_ATTR start_stop_pumping() {
         }
     }
 }
-
-const int BUFFER_SIZE = 64;
-char buffer[BUFFER_SIZE];
 
 void pump() {
     Serial.println("\n\nValve open.....\n\n");

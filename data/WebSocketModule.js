@@ -35,7 +35,6 @@ const WebSocketModule = {
     setTimeout(this.initWebSocket.bind(this), 2000);
   },
   onMessage: function (event) {
-    console.log(event.data);
     let data_from_mcu = ProcessCSVData(event.data);
     this.notifySubscribers(data_from_mcu);
   },

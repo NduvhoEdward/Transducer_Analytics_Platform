@@ -12,28 +12,20 @@ window.addEventListener("load", function () {
   // Subscribe to real WebSocket events
   WebSocketModule.subscribe(function (data_from_mcu) {
     console.log(data_from_mcu);
-    // distance.textContent = data_from_mcu.height;
+    add_data(
+      data_from_mcu.density,
+      data_from_mcu.volume,
+      data_from_mcu.test_time
+    );
   });
-
-  // Initialize WebSocket simulator module
-  // WebSocketSimulator.useSimulatedWebSocket();
-  // WebSocketSimulator.subscribe((data) => {
-  //   console.log("Simulated WebSocket Data Received:", data);
-  //   distance.textContent = data.height;
-  //   // handle_distance_data(data);
-  //   add_data(data.density, data.volume, data.test_time);
-  // });
-
-  // WebSocketSimulator.useRealWebSocket();
-  // WebSocketSimulator.useSimulatedWebSocket();
 });
 
 //
 
-var MAX_DATA_SET_LENGTH = 25;
+let MAX_DATA_SET_LENGTH = 25;
 
-var canvas = document.getElementById("time-chart");
-var data = {
+let canvas = document.getElementById("time-chart");
+let data = {
   datasets: [
     {
       label: "current1_mA",
@@ -49,7 +41,7 @@ var data = {
     },
   ],
 };
-var options = {
+let options = {
   animation: false,
   scales: {
     yAxes: [
@@ -73,18 +65,18 @@ var options = {
   },
   showLines: true,
 };
-var time_chart = new Chart.Line(canvas, {
+let time_chart = new Chart.Line(canvas, {
   data: data,
   options: options,
 });
 
 function add_data(current1 = [], current2 = [], test_time = []) {
-  var datasets = time_chart.data.datasets;
-  var labels = time_chart.data.labels;
-  var current1DataSet = datasets[0].data;
-  var current2DataSet = datasets[1].data;
+  let datasets = time_chart.data.datasets;
+  let labels = time_chart.data.labels;
+  let current1DataSet = datasets[0].data;
+  let current2DataSet = datasets[1].data;
 
-  var current1DataLength = current1DataSet.length;
+  let current1DataLength = current1DataSet.length;
 
   if (current1DataLength > MAX_DATA_SET_LENGTH) {
     current1DataSet.splice(0, current1.length);

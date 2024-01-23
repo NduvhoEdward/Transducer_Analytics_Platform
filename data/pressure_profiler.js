@@ -3,7 +3,7 @@
 
 // Section 1.2.1 -- Cards >> MCU Buttons
 let recording = true;
-let websocket = null; // = WebSocketModule.getWebSocket();
+let websocket = WebSocketModule.getWebSocket();
 
 document.getElementById("start-stop").addEventListener("click", function () {
   recording = !recording;
@@ -11,38 +11,38 @@ document.getElementById("start-stop").addEventListener("click", function () {
 });
 document.getElementById("clear").addEventListener("click", function () {
   clearTable();
-  clearGraph(myChart);
+  clearGraph(height_vol_chart);
   sendMessage("clear");
 });
 document.getElementById("reset").addEventListener("click", function () {
   clearTable();
-  clearGraph(myChart);
+  clearGraph(height_vol_chart);
   sendMessage("reset");
 });
 document.getElementById("zero").addEventListener("click", function () {
   sendMessage("zero");
 });
 function sendMessage(message) {
-  if (websocket.readyState === WebSocket.OPEN) {
-    websocket.send(message);
-    console.log("Sent message:", message);
-  } else {
-    console.error("WebSocket not open. Unable to send message.");
-  }
+  // if (websocket.readyState === WebSocket.OPEN) {
+  websocket.send(message);
+  console.log("Sent message:", message);
+  // } else {
+  // console.error("WebSocket not open. Unable to send message.");
+  // }
 }
 
 // Section 1.2.2 -- Modal
-var cardID = "";
+let cardID = "";
 function openModal(cardTitle) {
-  var modal = document.getElementById("myModal");
+  let modal = document.getElementById("myModal");
   modal.style.display = "block";
-  var modal_name = document
+  let modal_name = document
     .getElementById(cardTitle)
     .parentNode.parentNode.querySelector(".card-title").textContent;
-  var modal_units = document
+  let modal_units = document
     .getElementById(cardTitle)
     .parentNode.parentNode.querySelector(".reading").textContent;
-  var modal_title = `${modal_name} (${modal_units.trim()})`;
+  let modal_title = `${modal_name} (${modal_units.trim()})`;
   document.getElementById("modal-input-title").textContent = modal_title;
 
   cardID = cardTitle;
@@ -51,7 +51,7 @@ function closeModal() {
   document.getElementById("myModal").style.display = "none";
 }
 function sendCardData() {
-  var inputValue = document.getElementById("inputValue").value;
+  let inputValue = document.getElementById("inputValue").value;
   if (inputValue === "") {
     closeModal();
     return;
@@ -64,7 +64,7 @@ function sendCardData() {
 
 // Section 1.2.3 -- Chart
 const ctx = document.getElementById("realtimeChart").getContext("2d");
-const data = {
+const height_vol_data = {
   labels: [],
   datasets: [
     {
@@ -77,7 +77,7 @@ const data = {
 };
 const config = {
   type: "line",
-  data: data,
+  data: height_vol_data,
   options: {
     // animation: false,
     scales: {
@@ -99,7 +99,7 @@ const config = {
     },
   },
 };
-const myChart = new Chart(ctx, config);
+const height_vol_chart = new Chart(ctx, config);
 function clearGraph(chart) {
   chart.data.labels = [];
   chart.data.datasets.forEach((dataset) => {
@@ -111,25 +111,41 @@ function clearGraph(chart) {
 // Section 1.2.4 -- Raw Data >> Table
 function updateTable() {
   const dataTableBody = document.getElementById("dataTableBody");
-  const latestData = data.labels.map((label, index) => ({
+  const latestData = height_vol_data.labels.map((label, index) => ({
     height: label,
-    volume: data.datasets[0].data[index],
+    volume: height_vol_data.datasets[0].data[index],
   }));
 
   // Clear existing rows
-  dataTableBody.innerHTML = "";
+  // dataTableBody.innerHTML = "";
 
   // Append new rows
-  latestData.forEach((rowData) => {
-    const row = document.createElement("tr");
-    Object.values(rowData).forEach((value) => {
-      const cell = document.createElement("td");
-      cell.textContent = value;
-      row.appendChild(cell);
-    });
-    dataTableBody.appendChild(row);
-  });
+  // latestData.forEach((rowData) => {
+  //   const row = document.createElement("tr");
+  //   Object.values(rowData).forEach((value) => {
+  //     const cell = document.createElement("td");
+  //     cell.textContent = value;
+  //     row.appendChild(cell);
+  //   });
+  //   dataTableBody.appendChild(row);
+  // });
+
+  //
+
+  // Clear existing rows
+  dataTableBody.innerHTML = "";
+  // Initialize an empty string to store the HTML
+  let tableHTML = "";
+  // Iterate through the arrays and concatenate HTML
+  for (let i = 0; i < height_vol_data.labels.length; i++) {
+    // Create HTML for a row and append it to the string
+    tableHTML += `<tr><td>${height_vol_data.labels[i]}</td><td>${height_vol_data.datasets[0].data[i]}</td></tr>`;
+  }
+  dataTableBody.innerHTML = tableHTML;
 }
+
+//
+
 function clearTable() {
   const tableBody = document.getElementById("dataTableBody");
   tableBody.innerHTML = "";
@@ -140,7 +156,10 @@ function fitPolynomial() {
   // Perform polynomial regression
   const degree = 2;
   const result = regression.polynomial(
-    data.labels.map((label, index) => [label, data.datasets[0].data[index]]),
+    height_vol_data.labels.map((label, index) => [
+      label,
+      height_vol_data.datasets[0].data[index],
+    ]),
     { order: degree }
   );
   const coefficients = result.equation;
@@ -152,7 +171,7 @@ function fitPolynomial() {
     .join(" + ")}`;
 
   // Calculate y-values based on the equation
-  const fittedData = data.labels.map((label) => {
+  const fittedData = height_vol_data.labels.map((label) => {
     const x = label;
     const y = coefficients.reduce(
       (acc, coefficient, index) => acc + coefficient * Math.pow(x, index),
@@ -166,12 +185,12 @@ function fitPolynomial() {
   equationElement.textContent = equationText;
 
   // Update the chart with the fitted data
-  if (myChart.data.datasets.length > 1) {
+  if (height_vol_chart.data.datasets.length > 1) {
     // Remove the previous fitted curve dataset
-    myChart.data.datasets.pop();
+    height_vol_chart.data.datasets.pop();
   }
 
-  myChart.data.datasets.push({
+  height_vol_chart.data.datasets.push({
     label: "Fitted Curve",
     borderColor: "rgba(255, 0, 0, 1)",
     backgroundColor: "rgba(255, 0, 0, 0.2)",
@@ -179,14 +198,14 @@ function fitPolynomial() {
     fill: true,
   });
 
-  myChart.update();
+  height_vol_chart.update();
 }
 const fitButton = document.getElementById("fitButton");
 fitButton.addEventListener("click", fitPolynomial);
 
-function convertToCSV(data, metadata) {
+function convertToCSV(height_vol_data, metadata) {
   const mainHeader = ["Height", "Volume"];
-  const mainRows = data.labels.map((label, index) => [
+  const mainRows = height_vol_data.labels.map((label, index) => [
     label,
     data.datasets[0].data[index],
   ]);
@@ -199,8 +218,6 @@ function convertToCSV(data, metadata) {
   return csvContent;
 }
 function downloadCSV() {
-  console.log("COWNLOAD CALLED");
-
   const currentDate = new Date();
   const formattedDateTime = currentDate.toISOString();
   const metadata = {
@@ -210,7 +227,7 @@ function downloadCSV() {
     K_Factor: document.getElementById("k_factor").textContent,
     Sampling_Rate: document.getElementById("sampling_rate").textContent,
   };
-  const csvContent = convertToCSV(data, metadata);
+  const csvContent = convertToCSV(height_vol_data, metadata);
   const blob = new Blob([csvContent], { type: "text/csv" });
   const link = document.createElement("a");
   link.href = window.URL.createObjectURL(blob);
@@ -234,36 +251,28 @@ window.addEventListener("load", function () {
 
   // Subscribe to real WebSocket events
   WebSocketModule.subscribe(function (data_from_mcu) {
-    console.log(data_from_mcu);
     handle_pressure_data(data_from_mcu);
   });
-
-  // Initialize WebSocket simulator module
-  // WebSocketSimulator.useSimulatedWebSocket();
-  // WebSocketSimulator.subscribe((data) => {
-  //   console.log("Simulated WebSocket Data Received:", data);
-  //   // distance.textContent = data_from_mcu.height;
-  //   handle_pressure_data(data);
-  // });
-  // WebSocketSimulator.useRealWebSocket();
-  // WebSocketSimulator.useSimulatedWebSocket();
 });
 
 function handle_pressure_data(data_from_mcu) {
-  var keys = Object.keys(data_from_mcu);
-  for (var i = 0; i < keys.length; i++) {
-    var key = keys[i];
+  let keys = Object.keys(data_from_mcu);
 
-    if (key === "height" || key === "volume" || "time") {
+  for (let i = 0; i < keys.length; i++) {
+    let key = keys[i];
+
+    if (key === "height" || key === "volume") {
       continue;
     }
-    document.getElementById(key).innerHTML = data_from_mcu[key][-1];
+    document.getElementById(key).innerHTML =
+      data_from_mcu[key][data_from_mcu[key].length - 1];
   }
 
   if (recording) {
-    data.labels.push(data_from_mcu.height);
-    data.datasets[0].data.push(data_from_mcu.volume);
-    myChart.update();
+    height_vol_data.labels.push(...data_from_mcu.current_height);
+    height_vol_data.datasets[0].data.push(...data_from_mcu.volume);
+
+    height_vol_chart.update();
     updateTable();
   }
 }
