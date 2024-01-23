@@ -257,7 +257,7 @@ function handle_pressure_data(data_from_mcu) {
     if (key === "height" || key === "volume" || "time") {
       continue;
     }
-    document.getElementById(key).innerHTML = data_from_mcu[key];
+    document.getElementById(key).innerHTML = data_from_mcu[key][-1];
   }
 
   if (recording) {

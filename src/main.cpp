@@ -1,18 +1,16 @@
+#include "Transmitter.h"
 #include "control.h"
-#include "networking.h" 
-#include "gpios.h" 
-
-#include "Transmitter.h" 
-#include "pressure_transmitter.h" 
-#include "distance_transmitter.h" 
-
-#include "flow_sensor.h" 
+#include "distance_transmitter.h"
+#include "flow_sensor.h"
+#include "gpios.h"
+#include "networking.h"
+#include "pressure_transmitter.h"
 
 void setup() {
     Serial.begin(115200);
     configureGPIOs();
-    configure_p_transmitter(); 
-    configure_dis_transmitter(); 
+    configure_p_transmitter();
+    configure_dis_transmitter();
 
     pulseCounterInit();
     attachInterrupt(START_PUMP_BUTTON, start_stop_pumping, HIGH);
@@ -41,15 +39,15 @@ void setup() {
 
 void loop() {
     Serial.println("\n\nValve closed.....  \n\n");
-
+    pumping = true;
     while (!pumping) {
         pressure_mbars = pressure_transmitter.get_quantity();
         current_height = (pressure_mbars * bars_to_pa_multiplier) * m_to_mm_multiplier / (density * grav_acc);
-        current_height -= zero_height; 
+        current_height -= zero_height;
 
-        String sensorReadings = getSensorReadings();
-        notifyClients(sensorReadings);
-        delay(2000);
+        // std::string sensorReadings = getSensorReadings();
+        // notifyClients(sensorReadings);
+        delay(1000);
     }
 
     pump();

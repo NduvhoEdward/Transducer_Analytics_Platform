@@ -1,6 +1,7 @@
 #include "networking.h"
 
-#include <ArduinoJson.h>
+#include <iostream>
+#include <string>
 
 #include "control.h"
 #include "flow_sensor.h"
@@ -13,46 +14,37 @@ const char *password = "1Min!Ng010";
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 
-#define MAX_JSON_SIZE 1024
-JsonDocument readings;
-JsonDocument batch_readings;
+char batch_readings[MAX_CSV_BYTES];
+size_t batch_readings_size = 0;
 
-String floatToString(float value, int width, int precision) {
-    char buffer[10];
-    dtostrf(value, width, precision, buffer);
-    return buffer;
-}
-String getSensorReadings() {
-    readings["height"] = floatToString(current_height, 7, 3);
-    readings["volume"] = floatToString(total_volume_gal, 7, 3);
-    readings["density"] = floatToString(density, 6, 2);
-    readings["k_factor"] = floatToString(f_sensor_k_factor_ppg, 6, 2);
-    readings["current_height"] = floatToString(current_height, 7, 3);
-    readings["zero_height"] = floatToString(zero_height, 7, 3);
-    readings["max_height"] = floatToString(tank_max_height, 7, 3);
-    readings["sampling_rate"] = floatToString(sampling_rate_hz, 5, 2);
-
-    String jsonString;
-    serializeJson(readings, jsonString);
-
-    Serial.println("====== AS String  =====");
-    Serial.println(jsonString);
-
-    return jsonString;
+size_t getSensorReadings(char *buf, size_t bufferSize) {
+    return snprintf(buf, bufferSize, "%.3f, %.3f, %.2f, %.2f, %.3f, %.3f, %.2f\n",
+                    current_height,
+                    total_volume_gal,
+                    density,
+                    f_sensor_k_factor_ppg,
+                    zero_height,
+                    tank_max_height,
+                    sampling_rate_hz);
 }
 
-void buffer_handling(String sensor_readings) {
-    batch_readings.add(sensor_readings);
-    if (measureJson(batch_readings) >= MAX_JSON_SIZE) {
-        String jsonString;
-        serializeJson(batch_readings, jsonString);
-        notifyClients(jsonString);
+void update_buffer(const char *sensor_readings, size_t lineLen) {
+    // log_e // log_w // log_i // log_d // log_v
 
-        Serial.println("====== AS SENT  =====");
-        Serial.println(jsonString);
-
-        batch_readings.clear();
+    if (batch_readings_size + lineLen >= MAX_CSV_BYTES) {
+        batch_readings[batch_readings_size] = '\0';
+        notifyClients();
     }
+
+    memcpy(batch_readings + batch_readings_size, sensor_readings, lineLen);
+    batch_readings_size += lineLen;
+    batch_readings[batch_readings_size] = '\r';
+
+    for (int i = 0; i < batch_readings_size; i++) {
+        Serial.print(batch_readings[i]);
+    }
+
+    batch_readings_size++;
 }
 
 void initSPIFFS() {
@@ -62,7 +54,6 @@ void initSPIFFS() {
     Serial.println("SPIFFS mounted successfully");
 }
 
-// Initialize WiFi
 void initWiFi() {
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
@@ -87,19 +78,20 @@ void initWiFi() {
     Serial.println("mDNS responder started");
 }
 
-void notifyClients(String sensorReadings) {
-    ws.textAll(sensorReadings);
+void notifyClients() {
+    ws.textAll(batch_readings);
+
+    memset(batch_readings, 0, MAX_CSV_BYTES);
+    batch_readings_size = 0;
 }
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     AwsFrameInfo *info = (AwsFrameInfo *)arg;
     if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
         data[len] = 0;
-        String message = (char *)data;
+        std::string message = (char *)data;
 
         if (strcmp((char *)data, "getReadings") == 0) {
-            String sensorReadings = getSensorReadings();
-            notifyClients(sensorReadings);
         } else if (strcmp((char *)data, "clear") == 0) {
             current_height = 0;
             maxCountsCycle = 0;
@@ -116,29 +108,38 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         }
     }
 }
-void handleNumericMessage(String message) {
-    // Split the message into type and value
-    int separatorIndex = message.indexOf(':');
-    if (separatorIndex != -1) {
-        String variableName = message.substring(0, separatorIndex);
-        float variableValue = message.substring(separatorIndex + 1).toFloat();
 
-        // Handle different variable types
-        if (variableName == "density") {
-            density = variableValue;
-        } else if (variableName == "max_height") {
-            tank_max_height = variableValue;
-        } else if (variableName == "k_factor") {
-            f_sensor_k_factor_ppg = variableValue;
-        } else if (variableName == "sampling_rate") {
-            sampling_rate_hz = variableValue;
-        } else {
-            Serial.println("Unknown variable type");
+void handleNumericMessage(std::string message) {
+    // Find the position of the separator
+    size_t separatorIndex = message.find(':');
+
+    if (separatorIndex != std::string::npos) {
+        // Extract variableName and variableValue
+        std::string variableName = message.substr(0, separatorIndex);
+        std::string valueSubstring = message.substr(separatorIndex + 1);
+
+        try {
+            // Convert valueSubstring to float using std::stof
+            float variableValue = std::stof(valueSubstring);
+
+            // Handle different variable types
+            if (variableName == "density") {
+                density = variableValue;
+            } else if (variableName == "max_height") {
+                tank_max_height = variableValue;
+            } else if (variableName == "k_factor") {
+                f_sensor_k_factor_ppg = variableValue;
+            } else if (variableName == "sampling_rate") {
+                sampling_rate_hz = variableValue;
+            } else {
+                std::cerr << "Unknown variable type: " << variableName << std::endl;
+            }
+        } catch (const std::invalid_argument &e) {
+            std::cerr << "Error converting value to float: " << e.what() << std::endl;
         }
     } else {
-        Serial.println("Invalid numeric message format");
+        std::cerr << "Invalid numeric message format" << std::endl;
     }
-    notifyClients(getSensorReadings());
 }
 
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {

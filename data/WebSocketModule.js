@@ -1,4 +1,5 @@
 //
+import ProcessCSVData from "./ProcessCSVData.js";
 const WebSocketModule = {
   gateway: `ws://${window.location.hostname}/ws`,
   websocket: null,
@@ -33,9 +34,9 @@ const WebSocketModule = {
     console.log("Connection closed");
     setTimeout(this.initWebSocket.bind(this), 2000);
   },
-
   onMessage: function (event) {
-    var data_from_mcu = JSON.parse(event.data);
+    console.log(event.data);
+    let data_from_mcu = ProcessCSVData(event.data);
     this.notifySubscribers(data_from_mcu);
   },
 

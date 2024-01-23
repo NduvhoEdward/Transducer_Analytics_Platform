@@ -8,11 +8,11 @@
 #include "pressure_transmitter.h"
 
 volatile bool pumping = true;
-float sampling_rate_hz = 1;
+float sampling_rate_hz = 2;
 uint32_t sampling_rate_ms = static_cast<uint32_t>((1 / sampling_rate_hz) * 1000);
 
 unsigned long lastDebounceTime = 0;
-unsigned long debounceDelay = 1;
+unsigned long debounceDelay = 1000;
 
 void IRAM_ATTR start_stop_pumping() {
     unsigned long currentMillis = millis();
@@ -28,11 +28,10 @@ void IRAM_ATTR start_stop_pumping() {
     }
 }
 
-const int BUFFER_SIZE = 10;
+const int BUFFER_SIZE = 64;
 char buffer[BUFFER_SIZE];
 
 void pump() {
-    // configure_p_transmitter();
     Serial.println("\n\nValve open.....\n\n");
 
     digitalWrite(VALVE_CONTROL_PIN, HIGH);
@@ -74,10 +73,10 @@ void pump() {
         Serial.print(current_distance, 3);
 
         Serial.print("\n");
+        char lineBuf[64]{0};
 
-        String sensorReadings = getSensorReadings();
-        // notifyClients(sensorReadings);
-        buffer_handling(sensorReadings);
+        size_t lineLength = getSensorReadings(lineBuf, 64);
+        update_buffer(lineBuf, lineLength);
 
         delay(sampling_rate_ms);
     }
